@@ -2,7 +2,7 @@
 
 Dir=../.
 PrePull=./git-config/git-pre.sh
-PostPull=./git-config/git-pull.sh
+PostPull=./git-config/git-post.sh
 
 cd "$Dir"
 pwd
