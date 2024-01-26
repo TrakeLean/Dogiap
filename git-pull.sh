@@ -52,29 +52,20 @@ fi
 # Extract remote URL and repository name
 RemoteUrl=$(git config --get remote.origin.url)
 RepoName=$(basename -s .git $RemoteUrl)
-# Ask for GitHub username if not set
+
 # Extract the username using grep and cut
 GithubUsername=$(echo $RemoteUrl | grep -oP '(?<=github\.com\/)[^\/]+')
 GithubUsername="TrakeLean"
-# if [ -z "$GithubUsername" ]; then
-#     read -p "> Enter your GitHub username: " GithubUsername
-# fi
-# Write variables to file
-# echo "GithubUsername=$GithubUsername" >> .git-pull
-
 
 echo "> Remote URL: $RemoteUrl"
 echo "> Repository Name: $RepoName"
 echo "> GitHub Username: $GithubUsername"
 
 
-if [[ $remote_url != "git@"* ]]; then
-	echo "> Updating remote URL to use SSH..."
-	git remote set-url origin "git@github.com:$GithubUsername/$RepoName.git"
+if [[ $remote_url == "https://"* || $remote_url == "http://"* ]]; then
+    echo "> Updating remote URL to use SSH..."
+    git remote set-url origin "git@github.com:$GithubUsername/$RepoName.git"
 fi
-
-
-
 
 # Run pre-pull script if it exists and is executable
 if [ -x "$PrePull" ]; then
