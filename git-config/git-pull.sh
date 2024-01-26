@@ -1,8 +1,8 @@
 #!/bin/bash
 
-Dir=.
-PrePull=./pre-pull.sh
-PostPull=./post-pull.sh
+Dir=../.
+PrePull=./git-config/git-pre.sh
+PostPull=./git-config/git-pull.sh
 
 cd "$Dir"
 pwd
