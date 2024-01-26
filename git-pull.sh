@@ -1,10 +1,11 @@
 #!/bin/bash
 
 Dir=.
-PrePull=./pre-pull
-PostPull=./post-pull
+PrePull=./pre-pull.sh
+PostPull=./post-pull.sh
 
 cd "$Dir"
+pwd
 
 # Check if SSH key exists
 if [ ! -f ~/.ssh/id_rsa ]; then
@@ -57,9 +58,9 @@ RepoName=$(basename -s .git $RemoteUrl)
 GithubUsername=$(echo $RemoteUrl | grep -oP '(?<=github\.com\/)[^\/]+')
 GithubUsername="TrakeLean"
 
-echo "> Remote URL: $RemoteUrl"
-echo "> Repository Name: $RepoName"
-echo "> GitHub Username: $GithubUsername"
+# echo "> Remote URL: $RemoteUrl"
+# echo "> Repository Name: $RepoName"
+# echo "> GitHub Username: $GithubUsername"
 
 
 if [[ $remote_url == "https://"* || $remote_url == "http://"* ]]; then
@@ -70,6 +71,7 @@ fi
 # Run pre-pull script if it exists and is executable
 if [ -x "$PrePull" ]; then
     echo "> Running pre-pull script..."
+	chmod +x "./$PrePull"
     "$PrePull"
 fi
 
@@ -80,6 +82,7 @@ git pull
 # Run post-pull script if it exists and is executable
 if [ -x "$PostPull" ]; then
     echo "> Running post-pull script..."
+	chmod +x "./$PostPull"
     "$PostPull"
 fi
 
