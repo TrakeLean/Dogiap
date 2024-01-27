@@ -1,3 +1,3 @@
 def script():
-    print("Hello from script.py! But this time im betterERERER")
+    print("Hello from script.py! But this time im betterEREasdasdasdRER")
     
