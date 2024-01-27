@@ -5,6 +5,11 @@ import subprocess
 from script import script
 
 app = Flask(__name__)
+global terminate_thread, time_thread
+
+def run_script():
+    while not terminate_thread:
+        script()
 
 def git_pull():
     try:
@@ -15,24 +20,33 @@ def git_pull():
         print(f"Error during git pull: {e}")
         
 def restart_script():
-    global time_thread
+    global terminate_thread, time_thread  # Declare as global
     print("Restarting script...")
-    time_thread.cancel()
-    time_thread.join()
-    time_thread = threading.Thread(target=script())
+    terminate_thread = True  # Set the flag to terminate the thread
+    time_thread.join()  # Wait for the thread to finish
+    terminate_thread = False  # Reset the flag
+    time_thread = threading.Thread(target=run_script)  # Fix: remove the parentheses from run_script
     time_thread.start()
 
-# Webhook endpoint
 @app.route('/git-webhook', methods=['POST'])
 def webhook():
     payload = request.get_data(as_text=True)
-    print("Pulling from git...")
-    git_pull()
-    restart_script()
-    return "Webhook received successfully."
+    
+    # Check if the request is from GitHub
+    github_event = request.headers.get('X-GitHub-Event')
+
+    if github_event == 'push':
+        print("Webhook received from GitHub - Push event")
+        print("Pulling from git...")
+        git_pull()
+        restart_script()
+        return "Webhook received successfully."
+    else:
+        print(f"Ignoring webhook - Unexpected GitHub event: {github_event}")
+        return "Ignored"
 
 # Create and start threads
-time_thread = threading.Thread(target=script())
+time_thread = threading.Thread(target=run_script)
 time_thread.start()
 
 # Run the Flask app in the main thread
