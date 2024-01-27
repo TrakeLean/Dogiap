@@ -26,7 +26,7 @@ on:
       - main
 
 jobs:
-  restart-$RepoName:
+  restart: $RepoName:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout to the branch
@@ -40,16 +40,16 @@ jobs:
           if [ -n "$pid" ]; then
             # Terminate the current main.py process
             kill -9 $pid
-            echo "Terminated main.py process with PID $pid"
+            echo "> Terminated main.py process with PID $pid"
           else
-            echo "No running main.py process found"
+            echo "> No running main.py process found"
           fi
 
       - name: Start $RepoName Script
         run: |
           # Restart the main.py script
-          echo "Restarting main.py"
-          python main.py
+          echo "> Restarting main.py"
+          python3 main.py
 EOL
 fi
 
