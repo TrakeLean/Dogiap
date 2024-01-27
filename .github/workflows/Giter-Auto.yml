@@ -14,5 +14,7 @@ jobs:
 
       - name: Send POST request to restart Giter-Auto
         run: |
-          curl -X POST 129.242.219.112:5000/git-webhook
-
+          curl -X POST http://129.242.219.112:5000/git-webhook \
+            -H "Content-Type: application/json" \
+            -H "X-GitHub-Event: push" \
+            --data '{"path": "Giter-Auto"}'
