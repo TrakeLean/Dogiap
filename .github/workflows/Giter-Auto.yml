@@ -1,0 +1,32 @@
+name: Auto Update -> Giter-Auto
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  restart: Giter-Auto:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout to the branch
+        uses: actions/checkout@v2
+
+      - name: Stop Giter-Auto Script
+        run: |
+          # Find the process ID (PID) of the main.py script
+          pid=
+
+          if [ -n "" ]; then
+            # Terminate the current main.py process
+            kill -9 
+            echo "> Terminated main.py process with PID "
+          else
+            echo "> No running main.py process found"
+          fi
+
+      - name: Start Giter-Auto Script
+        run: |
+          # Restart the main.py script
+          echo "> Restarting main.py"
+          python3 main.py
