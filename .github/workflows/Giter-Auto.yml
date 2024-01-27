@@ -11,3 +11,8 @@ jobs:
     steps:
       - name: Checkout to the branch
         uses: actions/checkout@v2
+
+      - name: Send POST request to restart Giter-Auto
+        run: |
+          curl -X POST 129.242.219.112:5000/git-webhook
+

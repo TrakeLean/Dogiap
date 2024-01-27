@@ -5,11 +5,12 @@ import subprocess
 from script import script
 
 app = Flask(__name__)
-global terminate_thread, time_thread
+terminate_thread = False
 
 def run_script():
     while not terminate_thread:
         script()
+        time.sleep(60)
 
 def git_pull():
     try:
