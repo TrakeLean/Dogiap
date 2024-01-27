@@ -1,9 +1,5 @@
 #!/bin/bash
 
-Dir=../.
-
-cd "$Dir"
-
 # Check if .git folder exists
 if [ ! -d ".git" ]; then
     echo "There is no .git folder in this directory. Exiting."
@@ -21,7 +17,7 @@ WebHookServerUrl="http://129.242.219.112:5000/git-webhook"
 mkdir -p "$WorkflowDir"
 
 if [ ! -f "$WorkflowFile" ]; then
-    echo "> Creating GitHub Actions workflow file..."
+    echo -n ">⌛ Creating GitHub Actions workflow file..."
     cat <<EOL > "$WorkflowFile"
 name: Auto Update -> $RepoName
 
@@ -39,19 +35,16 @@ jobs:
 
       - name: Send POST request to restart $RepoName
         run: |
-          WEBHOOK_URL=$WebHookServerUrl
+          curl_response=\$(curl -X POST "\$WebHookServerUrl" -H "Content-Type: application/json" -H "X-GitHub-Event: push" --data "{\"reponame\": \"\$RepoName\"}" --fail --silent --show-error)
           
-          curl_response=$(curl -X POST "$WEBHOOK_URL" \
-            -H "Content-Type: application/json" \
-            -H "X-GitHub-Event: push" \
-            --data "{\"reponame\": \"$RepoName\"}" \
-            --fail --silent --show-error)
-          
-          if [ $? -ne 0 ]; then
+          if [ \$? -ne 0 ]; then
             echo "Failed to send webhook request"
             exit 1
           fi
           
-          echo "Webhook request sent successfully. Response: $curl_response"
+          echo "Webhook request sent successfully. Response: \$curl_response"
 EOL
+echo -e "\r\033[K>✅ Creating GitHub Actions workflow file..."
+else
+    echo ">✅ GitHub Actions workflow file already exists. Skipping."
 fi
