@@ -21,12 +21,15 @@ def git_pull():
         print(f"Error during git pull: {e}")
         
 def restart_script():
-    global terminate_thread, time_thread  # Declare as global
+    global terminate_thread, time_thread
     print("Restarting script...")
-    terminate_thread = True  # Set the flag to terminate the thread
-    time_thread.join()  # Wait for the thread to finish
-    terminate_thread = False  # Reset the flag
-    time_thread = threading.Thread(target=run_script)  # Fix: remove the parentheses from run_script
+    # Set the flag to terminate the thread
+    terminate_thread = True
+    # Wait for the thread to finish
+    time_thread.join()
+    # Reset the flag
+    terminate_thread = False
+    time_thread = threading.Thread(target=run_script)
     time_thread.start()
 
 @app.route('/git-webhook', methods=['POST'])

@@ -14,7 +14,17 @@ jobs:
 
       - name: Send POST request to restart Giter-Auto
         run: |
-          curl -X POST http://129.242.219.112:5000/git-webhook \
+          WEBHOOK_URL="http://129.242.219.112:5000/git-webhook"
+          
+          curl_response=$(curl -X POST "$WEBHOOK_URL" \
             -H "Content-Type: application/json" \
             -H "X-GitHub-Event: push" \
-            --data '{"path": "Giter-Auto"}'
+            --data '{"path": "Giter-Auto"}' \
+            --fail --silent --show-error)
+          
+          if [ $? -ne 0 ]; then
+            echo "Failed to send webhook request"
+            exit 1
+          fi
+          
+          echo "Webhook request sent successfully. Response: $curl_response"
