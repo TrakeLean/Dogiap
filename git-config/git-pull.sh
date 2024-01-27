@@ -1,8 +1,6 @@
 #!/bin/bash
 
 Dir=../.
-PrePull=./git-config/git-pre.sh
-PostPull=./git-config/git-post.sh
 
 cd "$Dir"
 pwd
@@ -50,40 +48,18 @@ else
 	exit 1
 fi
 
-# Extract remote URL and repository name
-RemoteUrl=$(git config --get remote.origin.url)
-RepoName=$(basename -s .git $RemoteUrl)
-
 # Extract the username using grep and cut
 GithubUsername=$(echo $RemoteUrl | grep -oP '(?<=github\.com\/)[^\/]+')
 GithubUsername="TrakeLean"
-
-# echo "> Remote URL: $RemoteUrl"
-# echo "> Repository Name: $RepoName"
-# echo "> GitHub Username: $GithubUsername"
-
 
 if [[ $remote_url == "https://"* || $remote_url == "http://"* ]]; then
     echo "> Updating remote URL to use SSH..."
     git remote set-url origin "git@github.com:$GithubUsername/$RepoName.git"
 fi
 
-# Run pre-pull script if it exists and is executable
-if [ -x "$PrePull" ]; then
-    echo "> Running pre-pull script..."
-	chmod +x "./$PrePull"
-    "$PrePull"
-fi
-
-# Perform Git pull
+# Perform Git push
 echo "> Pulling..."
-git pull
+git push
 
-# Run post-pull script if it exists and is executable
-if [ -x "$PostPull" ]; then
-    echo "> Running post-pull script..."
-	chmod +x "./$PostPull"
-    "$PostPull"
-fi
 
 echo "> Everything's done."
