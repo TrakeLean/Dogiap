@@ -26,7 +26,7 @@ on:
       - main
 
 jobs:
-  restart: $RepoName:
+  restart-$RepoName:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout to the branch
