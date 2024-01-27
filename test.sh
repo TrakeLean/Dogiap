@@ -18,7 +18,7 @@ mkdir -p "$WorkflowDir"
 if [ ! -f "$WorkflowFile" ]; then
     echo "> Creating GitHub Actions workflow file..."
     cat <<EOL > "$WorkflowFile"
-name: name: Auto Update -> $RepoName
+name: Auto Update -> $RepoName
 
 on:
   push:
