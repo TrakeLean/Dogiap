@@ -22,13 +22,13 @@ def webhook():
             if ContainerName is None:
                 raise ValueError("ContainerName is missing in the payload")
 
-            # Send SIGTERM to gracefully stop the main.py script
+            # gracefully stop the main.py script
             subprocess.run(["sudo", "docker", "exec", ContainerName, "kill", "-s", "TERM", "$(pgrep -f 'python3 main.py')"])
 
             # Give some time for the script to gracefully stop (adjust as needed)
             time.sleep(5)
 
-            # Example: Run 'git pull' and 'python3 main.py' inside the container
+            # Run 'git pull' and 'python3 main.py' inside the container
             subprocess.run(["sudo", "docker", "exec", ContainerName, "git", "pull"])
             subprocess.run(["sudo", "docker", "exec", ContainerName, "python3", "main.py"])
 
