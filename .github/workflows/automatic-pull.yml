@@ -1,4 +1,4 @@
-name: Auto Update -> Giter-Auto
+name: Auto Update -> github-automated-puller
 
 on:
   push:
@@ -6,20 +6,20 @@ on:
       - main
 
 jobs:
-  restart-Giter-Auto:
+  restart-github-automated-puller:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout to the branch
         uses: actions/checkout@v2
 
-      - name: Send POST request to restart Giter-Auto
+      - name: Send POST request to restart github-automated-puller
         run: |
-          curl_response=(curl -X POST "129.242.219.112:5000/git-webhook" -H "Content-Type: application/json" -H "X-GitHub-Event: push" --data "{\"github-automated-puller\": \"github-automated-puller\"}" --fail --silent --show-error)
+          curl_response=$(curl -X POST "129.242.219.112:5000/git-webhook" -H "Content-Type: application/json" -H "X-GitHub-Event: push" --data "{\"github-automated-puller\": \"github-automated-puller\"}" --fail --silent --show-error)
           
-          if [ 0 -ne 0 ]; then
+          if [ $? -ne 0 ]; then
             echo ">❌ Failed to send webhook request"
             exit 1
           fi
           
-          echo ">✅ Webhook request sent successfully. Response: "
+          echo ">✅ Webhook request sent successfully. Response: $curl_response"
           exit 0
