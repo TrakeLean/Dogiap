@@ -1,16 +1,93 @@
 #!/bin/bash
 
-# Check if .git folder exists
-echo -n ">⌛ Checking if .git folder exists..."
-if [ ! -d ".git" ]; then
-    echo ">❌ Are you in the Root directory of your repo? There is no .git folder in this directory. Exiting."
+# Check if an argument is provided
+if [ -z "$1" ]; then
+    echo ">❌ Usage: $0 <GitHub repository link>"
     exit 1
 fi
-echo -e "\r\033[K>✅ Checking if .git folder exists...  Successful"
 
-# Extract remote URL and repository name
-RemoteUrl=$(git config --get remote.origin.url)
-RepoName=$(basename -s .git $RemoteUrl | tr '[:upper:]' '[:lower:]')
+# Define patterns for GitHub repository links
+ssh_pattern="git@github.com:*/*"
+https_pattern="https://github.com/*/*"
+
+# Check if the argument matches either SSH or HTTPS GitHub repository patterns
+if [[ "$1" =~ $ssh_pattern || "$1" =~ $https_pattern ]]; then
+    echo ">✅ Argument is a GitHub repository link: $1"
+else
+    echo ">❌ Invalid GitHub repository link. Please provide a valid link."
+    exit 1
+fi
+
+# Check if SSH key exists
+if [ ! -f ~/.ssh/id_rsa ]; then
+    echo ">❌ No SSH key found."
+
+    # Prompt user to generate SSH key
+    read -p ">❓ Do you want to generate an SSH key? (y/n): " GenerateSsh
+
+    if [ "$GenerateSsh" = "y" ]; then
+        # Prompt user to enter email address
+        read -p ">🖊️ Enter your email address: " EmailAddress
+
+        # Generate SSH key
+        echo ">🔑 Generating SSH key..."
+        ssh-keygen -t rsa -b 4096 -C "$EmailAddress"
+
+        # Start the ssh-agent in the background
+        eval "$(ssh-agent -s)"
+
+        # Add SSH private key to the ssh-agent
+        ssh-add ~/.ssh/id_rsa
+
+        # Display the SSH public key
+        echo ">🔗 Add the following SSH public key to your Git hosting service:"
+        echo ""
+        cat ~/.ssh/id_rsa.pub
+        echo ""
+
+        # Prompt user to add SSH key to GitHub
+        echo ">⌨️ Press Enter after adding the SSH key to continue."
+        read -r
+    else
+        echo ">⏩ Skipping SSH key generation. This is needed to connect to GitHub, exiting."
+        exit 1
+    fi
+fi
+
+# Check if SSH key is associated with GitHub
+echo "> 🌐 Testing SSH key connection to GitHub..."
+if ssh -T git@github.com 2>&1 | grep -q "successfully authenticated"; then
+    echo "> ✅ SSH key is connected to GitHub."
+else
+    echo "> ❌ Unable to authenticate with GitHub using the SSH key."
+    echo "> 🛑 Please ensure that the SSH key is added to your GitHub account and try again."
+    exit 1
+fi
+
+# Update remote URL to use SSH
+if [[ $1 == "https://"* ]]; then
+    echo "> 🔄 Updating remote URL to use SSH..."
+
+    # Extracting username and repository name using regular expressions
+    regex="https://github.com/([^/]+)/([^/]+)\.git"
+    if [[ $1 =~ $regex ]]; then
+        GithubUsername="${BASH_REMATCH[1]}"
+        RepoName="${BASH_REMATCH[2]}"
+        RepoName=$(echo "$RepoName" | tr '[:upper:]' '[:lower:]')  # Convert RepoName to lowercase
+
+        git remote set-url origin "git@github.com:$GithubUsername/$RepoName.git"
+    fi
+fi
+
+# If the URL is already in SSH format, print the extracted values
+if [[ $1 == "git@github.com:"* ]]; then
+    regex="git@github.com:([^/]+)/([^/]+)\.git"
+    if [[ $1 =~ $regex ]]; then
+        GithubUsername="${BASH_REMATCH[1]}"
+        RepoName="${BASH_REMATCH[2]}"
+        RepoName=$(echo "$RepoName" | tr '[:upper:]' '[:lower:]')  # Convert RepoName to lowercase
+    fi
+fi
 
 # Check if Docker is installed
 if ! command -v docker &> /dev/null; then
@@ -91,63 +168,6 @@ else
     exit 1
 fi
 
-
-
-
--e "\r\033[K>✅
--e "\r\033[K>❌
-
-
-# Check if SSH key exists
-if [ ! -f ~/.ssh/id_rsa ]; then
-	echo ">❌ No SSH key found."
-
-	# Prompt user to generate SSH key
-	read -p ">❓ Do you want to generate an SSH key? (y/n): " GenerateSsh
-
-	if [ "$GenerateSsh" = "y" ]; then
-		read -p ">❓ Is this your email address?: $(git config user.email) (y/n): " IsEmailCorrect
-
-		if [ "$IsEmailCorrect" = "y" ]; then
-			EmailAddress=$(git config user.email)
-		else
-			read -p ">🖊️ Enter your email address: " EmailAddress
-		fi
-		echo ">🔑 Generating SSH key..."
-		ssh-keygen -t rsa -b 4096 -C $EmailAddress
-		eval "$(ssh-agent -s)"
-		ssh-add ~/.ssh/id_rsa
-
-		echo ">🔗 Add the following SSH public key to your Git hosting service:"
-		echo ""
-		cat ~/.ssh/id_rsa.pub
-		echo ""
-		echo ">⌨️ Press Enter after adding the SSH key to continue."
-		read -r
-	else
-		echo ">⏩ Skipping SSH key generation. Exiting."
-		exit 1
-	fi
-fi
-
-# Check if SSH key is associated with GitHub
-echo "> 🌐 Testing SSH key connection to GitHub..."
-if ssh -T git@github.com 2>&1 | grep -q "successfully authenticated"; then
-    echo "> ✅ SSH key is connected to GitHub."
-else
-    echo "> ❌ Unable to authenticate with GitHub using the SSH key."
-    echo "> 🛑 Please ensure that the SSH key is added to your GitHub account and try again."
-    exit 1
-fi
-
-# Extract the username using grep and cut
-GithubUsername=$(echo $RemoteUrl | grep -oP '(?<=github\.com\/)[^\/]+')
-
-if [[ $remote_url == "https://"* || $remote_url == "http://"* ]]; then
-    echo "> 🔄 Updating remote URL to use SSH..."
-    git remote set-url origin "git@github.com:$GithubUsername/$RepoName.git"
-fi
-
 # Add the workflow file to Git
 echo -n ">⌛ Adding all files to Git..."
 git add .
@@ -175,3 +195,4 @@ else
     echo -e "\r\033[K>❌ Pushing the changes... Failed"
     exit 1
 fi
+exit 0
