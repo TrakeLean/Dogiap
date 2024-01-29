@@ -1,70 +1,44 @@
 from flask import Flask, request
-import docker
 import json
+import subprocess
+import time
 
 app = Flask(__name__)
 
-def stop_main_script(container_name):
-    client = docker.from_env()
-
-    try:
-        container = client.containers.get(container_name)
-
-        # Find the PID of the main.py process
-        command = "pgrep -f 'main.py'"
-        exec_result = container.exec_run(command)
-        python_pid = exec_result.output.decode().strip()
-
-        if not python_pid:
-            return f"No running 'main.py' script found in container {container_name}."
-
-        # Send a KeyboardInterrupt signal to the main.py process
-        command = f"kill -INT {python_pid}"
-        exec_result = container.exec_run(command)
-
-        if exec_result.exit_code == 0:
-            return f"'main.py' script in container {container_name} stopped successfully."
-        else:
-            return f"Failed to stop 'main.py' script in container {container_name}. Exit code: {exec_result.exit_code}"
-
-    except docker.errors.NotFound:
-        return f"Container {container_name} not found."
-
-def send_command_to_container(ContainerName, command):
-    client = docker.from_env()
-    try:
-        container = client.containers.get(ContainerName)
-        # Send the command to the container
-        exec_result = container.exec_run(command)
-
-        # Check the exit code of the command
-        if exec_result.exit_code == 0:
-            return f"Command '{command}' successfully executed in container {ContainerName}."
-        else:
-            return f"Failed to execute command '{command}' in container {ContainerName}. Exit code: {exec_result.exit_code}"
-    
-    except docker.errors.NotFound:
-        return f"Container {ContainerName} not found."
-
 @app.route('/git-webhook', methods=['POST'])
 def webhook():
-    print("Webhook received")
-    payload = request.get_data(as_text=True)
-    data = json.loads(payload)  # Corrected line to parse JSON
-    print(data)
-    # Check if the request is from GitHub
-    github_event = request.headers.get('X-GitHub-Event')
+    try:
+        payload = request.get_data(as_text=True)
+        data = json.loads(payload)
 
-    if github_event == 'push':
-        print("Webhook received from GitHub - Push event")
-        ContainerName = data["ContainerName"]
-        print(stop_main_script(ContainerName))
-        print(send_command_to_container(ContainerName, "git pull"))
-        print(send_command_to_container(ContainerName, "python3 main.py"))
-        return "Success"
-    else:
-        print(f"Ignoring webhook - Unexpected GitHub event: {github_event}")
-        return "Ignored"
+        # Check if the request is from GitHub
+        github_event = request.headers.get('X-GitHub-Event')
+
+        if github_event == 'push':
+            print("Webhook received from GitHub - Push event")
+            
+            # Ensure ContainerName comes from a trusted source
+            ContainerName = data.get("ContainerName")
+            if ContainerName is None:
+                raise ValueError("ContainerName is missing in the payload")
+
+            # Send SIGTERM to gracefully stop the main.py script
+            subprocess.run(["docker", "exec", ContainerName, "kill", "-s", "TERM", "$(pgrep -f 'python3 main.py')"])
+
+            # Give some time for the script to gracefully stop (adjust as needed)
+            time.sleep(5)
+
+            # Example: Run 'git pull' and 'python3 main.py' inside the container
+            subprocess.run(["docker", "exec", ContainerName, "git", "pull"])
+            subprocess.run(["docker", "exec", ContainerName, "python3", "main.py"])
+
+            return "Success"
+        else:
+            print(f"Ignoring webhook - Unexpected GitHub event: {github_event}")
+            return "Ignored"
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+        return "Internal Server Error", 500
 
 # Run the Flask app in the main thread
 if __name__ == '__main__':
