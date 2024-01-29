@@ -14,7 +14,7 @@ jobs:
 
       - name: Send POST request to restart github-automated-puller
         run: |
-          curl_response=$(curl -X POST "129.242.219.112:5000/git-webhook" -H "Content-Type: application/json" -H "X-GitHub-Event: push" --data "{\"github-automated-puller\": \"github-automated-puller\"}" --fail --silent --show-error)
+          curl_response=$(curl -X POST "129.242.219.112:5000/git-webhook" -H "Content-Type: application/json" -H "X-GitHub-Event: push" --data '{"github-automated-puller": "github-automated-puller"}' --fail --silent --show-error)
           
           if [ $? -ne 0 ]; then
             echo ">❌ Failed to send webhook request"
