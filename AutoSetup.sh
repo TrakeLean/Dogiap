@@ -157,12 +157,12 @@ fi
 WorkflowFilePath="./.github/workflows/automatic-pull.yml"
 WebHookServerUrl="129.242.219.112:5000/git-webhook"
 
-# Check if GitHub Actions already exists if not create it
-if [ ! -f $WorkflowFilePath ]; then
+# Check if GitHub Actions workflow file already exists; if not, create it
+if [ ! -f "$WorkflowFilePath" ]; then
     echo -n ">⌛ Creating GitHub Actions directory and file..."  
     mkdir -p ./.github/workflows
     cat <<EOL > "$WorkflowFilePath"
-name: Auto Update -> Giter-Auto
+name: Auto Update -> $RepoName
 
 on:
   push:
@@ -170,27 +170,27 @@ on:
       - main
 
 jobs:
-  restart-Giter-Auto:
+  restart-$RepoName:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout to the branch
         uses: actions/checkout@v2
 
-      - name: Send POST request to restart Giter-Auto
+      - name: Send POST request to restart $RepoName
         run: |
-          curl_response=(curl -X POST "$WebHookServerUrl" -H "Content-Type: application/json" -H "X-GitHub-Event: push" --data "{\"$RepoName\": \"$RepoName\"}" --fail --silent --show-error)
+          curl_response=\$(curl -X POST "$WebHookServerUrl" -H "Content-Type: application/json" -H "X-GitHub-Event: push" --data "{\"$RepoName\": \"$RepoName\"}" --fail --silent --show-error)
           
-          if [ $? -ne 0 ]; then
+          if [ \$? -ne 0 ]; then
             echo ">❌ Failed to send webhook request"
             exit 1
           fi
           
-          echo ">✅ Webhook request sent successfully. Response: $curl_response"
+          echo ">✅ Webhook request sent successfully. Response: \$curl_response"
           exit 0
 EOL
-  echo -e "\r\033[K>✅ Creating GitHub Actions directory and file...   Successful"
+    echo -e "\r\033[K>✅ Creating GitHub Actions directory and file...   Successful"
 else
-  echo -e "\r\033[K>✅ GitHub Actions directory and file already exists... Skipping"
+    echo -e "\r\033[K>✅ GitHub Actions directory and file already exists... Skipping"
 fi
 
 
