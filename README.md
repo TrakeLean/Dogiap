@@ -7,18 +7,10 @@ The GitHub Automated Puller is a bash script (`AutoSetup.sh`) that streamlines t
 - Validates the provided GitHub repository link.
 - Generates an SSH key, if required, for authenticating with GitHub.
 - Updates the remote repository URL to use SSH instead of HTTPS.
-- Checks for Docker installation and offers installation if Docker is not found.
+- Checks for the installation of essential tools such as Docker, Git, and SSH, and offers installation if any of them is not found.
 - Creates a Dockerfile if it doesn't exist and builds a Docker image from it.
 - Runs the Docker image as a container.
 - Adds and commits changes to the git repository and pushes them to GitHub.
-
-## Prerequisites
-
-Before running `AutoSetup.sh`, make sure you have the following prerequisites on your system:
-
-- `git` - Distributed version control system
-- `ssh` - Secure Shell for accessing remote servers
-- `docker` - Platform for developing, shipping, and running applications within containers (will be installed by the script if not present)
 
 ## Usage
 
@@ -48,7 +40,8 @@ Here's what `AutoSetup.sh` will do:
 
 4. **Remote URL Update:** The script will automatically update the repository remote URL to use SSH.
 
-5. **Docker Installation Check and Setup:** If Docker isn't installed, the script will offer to install it. Once Docker is set up, it will check for the existence of a `Dockerfile` and create one if needed.
+5. **Environment Setup:** The script checks for the presence of essential tools such as Git, Docker, and SSH. If any of these tools are not installed, the script will prompt the user to install them. Once Docker, Git, and SSH are set up, the script further checks for the existence of a `Dockerfile` and creates one if needed.
+
 
 6. **Building and Running Docker Image:** With the Dockerfile in place, the script builds a new Docker image with your repository name, and runs it as a container.
 

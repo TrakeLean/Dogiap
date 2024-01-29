@@ -1,0 +1,25 @@
+name: Auto Update -> Giter-Auto
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  restart-Giter-Auto:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout to the branch
+        uses: actions/checkout@v2
+
+      - name: Send POST request to restart Giter-Auto
+        run: |
+          curl_response=
+          
+          if [ 22 -ne 0 ]; then
+            echo ">❌ Failed to send webhook request"
+            exit 1
+          fi
+          
+          echo ">✅ Webhook request sent successfully. Response: "
+          exit 0

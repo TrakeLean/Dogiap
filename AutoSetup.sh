@@ -18,6 +18,38 @@ else
     exit 1
 fi
 
+# Check if SSH is available
+if ! command -v ssh &> /dev/null; then
+    # Ask if the user wants to install SSH
+    read -p ">🔑 SSH is not installed. Do you want to install SSH? (y/n): " InstallSSH
+
+    if [ "$InstallSSH" = "y" ]; then
+        # Inform the user about the installation process
+        echo -n ">⌛ Installing SSH..."
+
+        # Check the Linux distribution and install SSH accordingly
+        if [ -f /etc/redhat-release ]; then
+            # For Red Hat-based systems (e.g., CentOS)
+            sudo yum install -y openssh
+        elif [ -f /etc/debian_version ]; then
+            # For Debian-based systems (e.g., Ubuntu)
+            sudo apt-get update
+            sudo apt-get install -y openssh-client
+        else
+            # Unsupported Linux distribution
+            echo -e "\r\033[K>❌ Unsupported Linux distribution. Please install SSH manually."
+            exit 1
+        fi
+
+        # Display success message
+        echo -e "\r\033[K>✅ SSH has been installed successfully."
+    else
+        # User chose not to install SSH
+        echo ">🔑 SSH is required for this script. Exiting."
+        exit 1
+    fi
+fi
+
 # Check if SSH key exists
 if [ ! -f ~/.ssh/id_rsa ]; then
     echo ">❌ No SSH key found."
@@ -64,6 +96,38 @@ else
     exit 1
 fi
 
+# Check if Git is installed
+if ! command -v git &> /dev/null; then
+    # Ask if the user wants to install Git
+    read -p ">🚀 Git is not installed. Do you want to install Git? (y/n): " InstallGit
+
+    if [ "$InstallGit" = "y" ]; then
+        # Inform the user about the installation process
+        echo -n ">⌛ Installing Git..."
+
+        # Check the Linux distribution and install Git accordingly
+        if [ -f /etc/redhat-release ]; then
+            # For Red Hat-based systems (e.g., CentOS)
+            sudo yum install -y git
+        elif [ -f /etc/debian_version ]; then
+            # For Debian-based systems (e.g., Ubuntu)
+            sudo apt-get update
+            sudo apt-get install -y git
+        else
+            # Unsupported Linux distribution
+            echo -e "\r\033[K>❌ Unsupported Linux distribution. Please install Git manually."
+            exit 1
+        fi
+
+        # Display success message
+        echo -e "\r\033[K>✅ Git has been installed successfully."
+    else
+        # User chose not to install Git
+        echo ">🚀 Git is required for this script. Exiting."
+        exit 1
+    fi
+fi
+
 # Update remote URL to use SSH
 if [[ $1 == "https://"* ]]; then
     echo "> 🔄 Updating remote URL to use SSH..."
@@ -88,6 +152,47 @@ if [[ $1 == "git@github.com:"* ]]; then
         RepoName=$(echo "$RepoName" | tr '[:upper:]' '[:lower:]')  # Convert RepoName to lowercase
     fi
 fi
+
+# Setup variables for GitHub Actions workflow file
+WorkflowFilePath="./.github/workflows/automatic-pull.yml"
+WebHookServerUrl="129.242.219.112:5000"
+
+# Check if GitHub Actions already exists if not create it
+if [ ! -f $WorkflowFilePath ]; then
+    echo -n ">⌛ Creating GitHub Actions directory and file..."  
+    mkdir -p ./.github/workflows
+    cat <<EOL > "$WorkflowFilePath"
+name: Auto Update -> Giter-Auto
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  restart-Giter-Auto:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout to the branch
+        uses: actions/checkout@v2
+
+      - name: Send POST request to restart Giter-Auto
+        run: |
+          curl_response=$(curl -X POST "$WebHookServerUrl" -H "Content-Type: application/json" -H "X-GitHub-Event: push" --data "{\"$RepoName\": \"$RepoName\"}" --fail --silent --show-error)
+          
+          if [ $? -ne 0 ]; then
+            echo ">❌ Failed to send webhook request"
+            exit 1
+          fi
+          
+          echo ">✅ Webhook request sent successfully. Response: $curl_response"
+          exit 0
+EOL
+  echo -e "\r\033[K>✅ Creating GitHub Actions directory and file...   Successful"
+else
+  echo -e "\r\033[K>✅ GitHub Actions directory and file already exists... Skipping"
+fi
+
 
 # Check if Docker is installed
 if ! command -v docker &> /dev/null; then
@@ -148,25 +253,56 @@ else
   echo -e "\r\033[K>✅ Dockerfile already exists... Skipping"
 fi
 
-# Build and run the Docker image
-echo -n -e ">⌛ Building Docker image \"$RepoName\"...\n"
-sudo docker build -t $RepoName .
-build_status=$?
-if [ $build_status -eq 0 ]; then
-    echo -e "\r\033[K>✅ Building Docker image \"$RepoName\"... Successful"
-    echo -n -e "\n>⌛ Running Docker image \"$RepoName\"..."
-    sudo docker run -it -d --name $RepoName $RepoName
-    run_status=$?
-    if [ $run_status -eq 0 ]; then
-        echo -e "\r\033[K>✅ Running Docker image \"$RepoName\"... Successful"
+# Check if the Docker container already exists
+if sudo docker ps -a | grep -q $RepoName; then
+    echo "Container \"$RepoName\" already exists."
+
+    # Prompt user for action
+    read -p "Do you want to delete and build a new one (y/n)? " choice
+    if [ "$choice" == "y" ]; then
+        echo -n -e ">⌛ Deleting existing Docker container \"$RepoName\"...\n"
+        sudo docker stop $RepoName && sudo docker rm $RepoName
+        delete_status=$?
+        if [ $delete_status -eq 0 ]; then
+            echo -e "\r\033[K>✅ Deleted existing Docker container \"$RepoName\""
+
+            # Build and run the Docker image
+            echo -n -e ">⌛ Building Docker image \"$RepoName\"...\n"
+            sudo docker build -t $RepoName .
+            build_status=$?
+            if [ $build_status -eq 0 ]; then
+                echo -e "\r\033[K>✅ Building Docker image \"$RepoName\"... Successful"
+                echo -n -e "\n>⌛ Running Docker image \"$RepoName\"..."
+                sudo docker run -it -d --name $RepoName $RepoName
+                run_status=$?
+                if [ $run_status -eq 0 ]; then
+                    echo -e "\r\033[K>✅ Running Docker image \"$RepoName\"... Successful"
+                else
+                    echo -e "\r\033[K>❌ Running Docker image \"$RepoName\"... Failed"
+                    exit 1
+                fi
+            else
+                echo -e "\r\033[K>❌ Building Docker image \"$RepoName\"... Failed"
+                exit 1
+            fi
+        else
+            echo -e "\r\033[K>❌ Failed to delete existing Docker container \"$RepoName\""
+            exit 1
+        fi
     else
-        echo -e "\r\033[K>❌ Running Docker image \"$RepoName\"... Failed"
-        exit 1
+        # Restart the existing Docker container
+        echo -n -e ">⌛ Restarting existing Docker container \"$RepoName\"...\n"
+        sudo docker restart $RepoName
+        restart_status=$?
+        if [ $restart_status -eq 0 ]; then
+            echo -e "\r\033[K>✅ Restarting existing Docker container \"$RepoName\"... Successful"
+        else
+            echo -e "\r\033[K>❌ Restarting existing Docker container \"$RepoName\"... Failed"
+            exit 1
+        fi
     fi
-else
-    echo -e "\r\033[K>❌ Building Docker image \"$RepoName\"... Failed"
-    exit 1
 fi
+
 
 # Add the workflow file to Git
 echo -n ">⌛ Adding all files to Git..."
