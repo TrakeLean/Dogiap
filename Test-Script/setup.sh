@@ -35,14 +35,14 @@ jobs:
 
       - name: Send POST request to restart $RepoName
         run: |
-          curl_response=\$(curl -X POST "\$WebHookServerUrl" -H "Content-Type: application/json" -H "X-GitHub-Event: push" --data "{\"reponame\": \"\$RepoName\"}" --fail --silent --show-error)
+          curl_response=\$(curl -X POST "$WebHookServerUrl" -H "Content-Type: application/json" -H "X-GitHub-Event: push" --data '{"reponame": "$RepoName"}' --fail --silent --show-error)
           
-          if [ \$? -ne 0 ]; then
+          if [ $? -ne 0 ]; then
             echo ">❌ Failed to send webhook request"
             exit 1
           fi
           
-          echo ">✅ Webhook request sent successfully. Response: \$curl_response"
+          echo ">✅ Webhook request sent successfully. Response: $curl_response"
 EOL
 echo -e "\r\033[K>✅ Creating GitHub Actions workflow file..."
 else

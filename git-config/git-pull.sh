@@ -50,7 +50,6 @@ fi
 
 # Extract the username using grep and cut
 GithubUsername=$(echo $RemoteUrl | grep -oP '(?<=github\.com\/)[^\/]+')
-GithubUsername="TrakeLean"
 
 if [[ $remote_url == "https://"* || $remote_url == "http://"* ]]; then
     echo "> Updating remote URL to use SSH..."
