@@ -51,7 +51,7 @@ def webhook():
     print("Webhook received")
     payload = request.get_data(as_text=True)
     data = json.loads(payload)  # Corrected line to parse JSON
-
+    print(data)
     # Check if the request is from GitHub
     github_event = request.headers.get('X-GitHub-Event')
 
