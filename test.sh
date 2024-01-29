@@ -3,7 +3,7 @@
 # Check if .git folder exists
 echo -n ">⌛ Checking if .git folder exists..."
 if [ ! -d ".git" ]; then
-    echo ">❌ There is no .git folder in this directory. Exiting."
+    echo ">❌ Are you in the Root directory of your repo? There is no .git folder in this directory. Exiting."
     exit 1
 fi
 echo -e "\r\033[K>✅ Checking if .git folder exists...  Successful"
@@ -81,7 +81,7 @@ if [ $build_status -eq 0 ]; then
     sudo docker run -it -d --name $RepoName $RepoName
     run_status=$?
     if [ $run_status -eq 0 ]; then
-        echo -n "\r\033[K>✅ Running Docker image \"$RepoName\"... Successful"
+        echo -e "\r\033[K>✅ Running Docker image \"$RepoName\"... Successful"
     else
         echo -e "\r\033[K>❌ Running Docker image \"$RepoName\"... Failed"
         exit 1
@@ -89,6 +89,63 @@ if [ $build_status -eq 0 ]; then
 else
     echo -e "\r\033[K>❌ Building Docker image \"$RepoName\"... Failed"
     exit 1
+fi
+
+
+
+
+-e "\r\033[K>✅
+-e "\r\033[K>❌
+
+
+# Check if SSH key exists
+if [ ! -f ~/.ssh/id_rsa ]; then
+	echo ">❌ No SSH key found."
+
+	# Prompt user to generate SSH key
+	read -p ">❓ Do you want to generate an SSH key? (y/n): " GenerateSsh
+
+	if [ "$GenerateSsh" = "y" ]; then
+		read -p ">❓ Is this your email address?: $(git config user.email) (y/n): " IsEmailCorrect
+
+		if [ "$IsEmailCorrect" = "y" ]; then
+			EmailAddress=$(git config user.email)
+		else
+			read -p ">🖊️ Enter your email address: " EmailAddress
+		fi
+		echo ">🔑 Generating SSH key..."
+		ssh-keygen -t rsa -b 4096 -C $EmailAddress
+		eval "$(ssh-agent -s)"
+		ssh-add ~/.ssh/id_rsa
+
+		echo ">🔗 Add the following SSH public key to your Git hosting service:"
+		echo ""
+		cat ~/.ssh/id_rsa.pub
+		echo ""
+		echo ">⌨️ Press Enter after adding the SSH key to continue."
+		read -r
+	else
+		echo ">⏩ Skipping SSH key generation. Exiting."
+		exit 1
+	fi
+fi
+
+# Check if SSH key is associated with GitHub
+echo "> 🌐 Testing SSH key connection to GitHub..."
+if ssh -T git@github.com 2>&1 | grep -q "successfully authenticated"; then
+    echo "> ✅ SSH key is connected to GitHub."
+else
+    echo "> ❌ Unable to authenticate with GitHub using the SSH key."
+    echo "> 🛑 Please ensure that the SSH key is added to your GitHub account and try again."
+    exit 1
+fi
+
+# Extract the username using grep and cut
+GithubUsername=$(echo $RemoteUrl | grep -oP '(?<=github\.com\/)[^\/]+')
+
+if [[ $remote_url == "https://"* || $remote_url == "http://"* ]]; then
+    echo "> 🔄 Updating remote URL to use SSH..."
+    git remote set-url origin "git@github.com:$GithubUsername/$RepoName.git"
 fi
 
 # Add the workflow file to Git
