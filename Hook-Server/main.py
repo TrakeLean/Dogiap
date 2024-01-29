@@ -1,5 +1,6 @@
 from flask import Flask, request
 import docker
+import json
 
 app = Flask(__name__)
 
@@ -47,14 +48,16 @@ def send_command_to_container(ContainerName, command):
 
 @app.route('/git-webhook', methods=['POST'])
 def webhook():
+    print("Webhook received")
     payload = request.get_data(as_text=True)
-    
+    data = json.loads(payload)  # Corrected line to parse JSON
+
     # Check if the request is from GitHub
     github_event = request.headers.get('X-GitHub-Event')
 
     if github_event == 'push':
         print("Webhook received from GitHub - Push event")
-        ContainerName = payload["repository"]["name"]
+        ContainerName = data["repository"]["name"]
         print(stop_main_script(ContainerName))
         print(send_command_to_container(ContainerName, "git pull"))
         print(send_command_to_container(ContainerName, "python3 main.py"))
