@@ -57,7 +57,7 @@ def webhook():
 
     if github_event == 'push':
         print("Webhook received from GitHub - Push event")
-        ContainerName = data["repository"]["name"]
+        ContainerName = data["ContainerName"]
         print(stop_main_script(ContainerName))
         print(send_command_to_container(ContainerName, "git pull"))
         print(send_command_to_container(ContainerName, "python3 main.py"))
