@@ -14,9 +14,9 @@ jobs:
 
       - name: Send POST request to restart Giter-Auto
         run: |
-          curl_response=
+          curl_response=Webhook received successfully.
           
-          if [ 22 -ne 0 ]; then
+          if [ 0 -ne 0 ]; then
             echo ">❌ Failed to send webhook request"
             exit 1
           fi

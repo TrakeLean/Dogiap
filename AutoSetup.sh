@@ -155,7 +155,7 @@ fi
 
 # Setup variables for GitHub Actions workflow file
 WorkflowFilePath="./.github/workflows/automatic-pull.yml"
-WebHookServerUrl="129.242.219.112:5000"
+WebHookServerUrl="129.242.219.112:5000/git-webhook"
 
 # Check if GitHub Actions already exists if not create it
 if [ ! -f $WorkflowFilePath ]; then

@@ -56,10 +56,10 @@ def webhook():
 
     if github_event == 'push':
         print("Webhook received from GitHub - Push event")
-        print("Pulling from git...")
-        payload["repository"]
-        git_pull()
-        restart_script()
+        # print("Pulling from git...")
+        # payload["repository"]
+        # git_pull()
+        # restart_script()
         return "Webhook received successfully."
     else:
         print(f"Ignoring webhook - Unexpected GitHub event: {github_event}")
