@@ -5,7 +5,7 @@ FROM python
 WORKDIR /app
 
 # Copy files into the container
-COPY ../main.py .
+COPY main.py .
 
 # Define the command to run on container start
 CMD ["python", "main.py"]
