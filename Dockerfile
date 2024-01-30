@@ -1,6 +1,10 @@
 # Use an official Python runtime as a parent image
 FROM python
 
+# Install Git
+RUN apt-get update && \
+    apt-get install -y git
+
 # Set working directory
 WORKDIR /app
 

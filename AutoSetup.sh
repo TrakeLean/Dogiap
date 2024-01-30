@@ -237,7 +237,11 @@ if [ ! -f $DockerFilePath ]; then
     echo -n ">⌛ Creating Dockerfile..."  
     cat <<EOL > "$DockerFilePath"
 # Use an official Python runtime as a parent image
-FROM python
+FROM python:3.9
+
+# Install Git
+RUN apt-get update && \
+    apt-get install -y git
 
 # Set working directory
 WORKDIR /app
@@ -251,6 +255,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Define the command to run on container start
 CMD ["python3", "main.py"]
+
 EOL
   echo -e "\r\033[K>✅ Creating Dockerfile...   Successful"
 else
