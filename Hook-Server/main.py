@@ -1,6 +1,6 @@
 from flask import Flask, request
 import json
-import subprocess
+import os
 import time
 
 app = Flask(__name__)
@@ -24,16 +24,11 @@ def webhook():
             if ContainerName is None:
                 raise ValueError("ContainerName is missing in the payload")
 
-            # gracefully stop the main.py script
-            subprocess.run(["sudo", "docker", "exec", ContainerName, "kill", "-s", "TERM", "$(pgrep -f 'python3 main.py')"])
-
-            # Give some time for the script to gracefully stop (adjust as needed)
-            time.sleep(5)
-
-            # Run 'git pull' and 'python3 main.py' inside the container
-            subprocess.run(["sudo", "docker", "exec", ContainerName, "git", "pull"])
-            subprocess.run(["sudo", "docker", "exec", ContainerName, "python3", "main.py"])
-
+            # Run 'kill main', 'git pull' and 'python3 main.py' inside the container
+            os.system(f"docker exec {ContainerName} pkill -f main.py")
+            os.system(f"docker exec {ContainerName} git pull")
+            os.system(f"docker exec {ContainerName} python3 main.py")
+            
             return "Success"
         else:
             print(f"Ignoring webhook - Unexpected GitHub event: {github_event}")
