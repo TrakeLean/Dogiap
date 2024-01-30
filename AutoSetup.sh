@@ -254,6 +254,7 @@ else
 fi
 
 # Setup permissions for Docker
+echo -n -e ">⌛ Setting up permissions for Docker..."
 sudo chmod 666 /var/run/docker.sock
 
 # Check if the Docker container already exists
@@ -263,19 +264,19 @@ if docker ps -a | grep -q $RepoName; then
     # Prompt user for action
     read -p "Do you want to delete and build a new one (y/n)? " choice
     if [ "$choice" == "y" ]; then
-        echo -n -e ">⌛ Deleting existing Docker container \"$RepoName\"...\n"
+        echo -e ">⌛ Deleting existing Docker container \"$RepoName\"...\n"
         docker stop $RepoName && docker rm $RepoName
         delete_status=$?
         if [ $delete_status -eq 0 ]; then
             echo -e "\r\033[K>✅ Deleted existing Docker container \"$RepoName\""
 
             # Build and run the Docker image
-            echo -n -e ">⌛ Building Docker image \"$RepoName\"...\n"
-            o docker build -t $RepoName .
+            echo -e ">⌛ Building Docker image \"$RepoName\"...\n"
+            docker build -t $RepoName .
             build_status=$?
             if [ $build_status -eq 0 ]; then
                 echo -e "\r\033[K>✅ Building Docker image \"$RepoName\"... Successful"
-                echo -n -e "\n>⌛ Running Docker image \"$RepoName\"..."
+                echo -e "\n>⌛ Running Docker image \"$RepoName\"..."
                 docker run -it -d --name $RepoName $RepoName
                 run_status=$?
                 if [ $run_status -eq 0 ]; then
