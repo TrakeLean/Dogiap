@@ -253,27 +253,30 @@ else
   echo -e "\r\033[K>✅ Dockerfile already exists... Skipping"
 fi
 
+# Setup permissions for Docker
+sudo chmod 666 /var/run/docker.sock
+
 # Check if the Docker container already exists
-if sudo docker ps -a | grep -q $RepoName; then
+if docker ps -a | grep -q $RepoName; then
     echo "Container \"$RepoName\" already exists."
 
     # Prompt user for action
     read -p "Do you want to delete and build a new one (y/n)? " choice
     if [ "$choice" == "y" ]; then
         echo -n -e ">⌛ Deleting existing Docker container \"$RepoName\"...\n"
-        sudo docker stop $RepoName && sudo docker rm $RepoName
+        docker stop $RepoName && docker rm $RepoName
         delete_status=$?
         if [ $delete_status -eq 0 ]; then
             echo -e "\r\033[K>✅ Deleted existing Docker container \"$RepoName\""
 
             # Build and run the Docker image
             echo -n -e ">⌛ Building Docker image \"$RepoName\"...\n"
-            sudo docker build -t $RepoName .
+            o docker build -t $RepoName .
             build_status=$?
             if [ $build_status -eq 0 ]; then
                 echo -e "\r\033[K>✅ Building Docker image \"$RepoName\"... Successful"
                 echo -n -e "\n>⌛ Running Docker image \"$RepoName\"..."
-                sudo docker run -it -d --name $RepoName $RepoName
+                docker run -it -d --name $RepoName $RepoName
                 run_status=$?
                 if [ $run_status -eq 0 ]; then
                     echo -e "\r\033[K>✅ Running Docker image \"$RepoName\"... Successful"
@@ -292,7 +295,7 @@ if sudo docker ps -a | grep -q $RepoName; then
     else
         # Restart the existing Docker container
         echo -n -e ">⌛ Restarting existing Docker container \"$RepoName\"...\n"
-        sudo docker restart $RepoName
+        docker restart $RepoName
         restart_status=$?
         if [ $restart_status -eq 0 ]; then
             echo -e "\r\033[K>✅ Restarting existing Docker container \"$RepoName\"... Successful"
