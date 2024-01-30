@@ -254,7 +254,7 @@ else
 fi
 
 # Setup permissions for Docker
-echo -n -e ">⌛ Setting up permissions for Docker..."
+echo -n -e ">⌛ Setting up permissions for Docker...\n"
 sudo chmod 666 /var/run/docker.sock
 
 # Check if the Docker container already exists
@@ -295,7 +295,7 @@ if docker ps -a | grep -q $RepoName; then
         fi
     else
         # Restart the existing Docker container
-        echo -n -e ">⌛ Restarting existing Docker container \"$RepoName\"...\n"
+        echo -e ">⌛ Restarting existing Docker container \"$RepoName\"...\n"
         docker restart $RepoName
         restart_status=$?
         if [ $restart_status -eq 0 ]; then
