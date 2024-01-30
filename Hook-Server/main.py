@@ -9,7 +9,7 @@ app = Flask(__name__)
 @app.route('/git-webhook', methods=['POST'])
 def webhook():
     try:
-        print("Webhook received: ", ContainerName)
+        print("Webhook received: ")
         payload = request.get_data(as_text=True)
         data = json.loads(payload)
 
@@ -17,10 +17,10 @@ def webhook():
         github_event = request.headers.get('X-GitHub-Event')
 
         if github_event == 'push':
-            print("Webhook received from GitHub - Push event")
             
             # Ensure ContainerName comes from a trusted source
             ContainerName = data.get("ContainerName")
+            print("Webhook received from GitHub - Push event:", ContainerName)
             if ContainerName is None:
                 raise ValueError("ContainerName is missing in the payload")
 
