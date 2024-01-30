@@ -12,8 +12,23 @@ dpkg-deb --build Dogiap
 sudo apt-get install -f ~/Dogiap.deb
 which dogiap
 
+# Remove the .deb file
+sudo rm -r Dogiap.deb 
 
+# apt remove dogiap
+sudo apt-get remove -y dogiap
 
+# Build the Debian package
+dpkg-deb --build Dogiap
+
+# Install the Debian package
+sudo dpkg -i ~/Dogiap.deb
+
+# If needed, fix dependencies
+sudo apt-get install -f
+
+# Test
+dogiap git@github.com:TrakeLean/Dogiap.git
 
 - Validates the provided GitHub repository link.
 - Generates an SSH key, if required, for authenticating with GitHub.

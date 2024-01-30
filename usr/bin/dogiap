@@ -42,7 +42,7 @@ main() {
 
         if [ "$InstallSSH" = "y" ]; then
             # Inform the user about the installation process
-            echo -n "> Installing SSH..."
+            echo "> Installing SSH..."
 
             # Check the Linux distribution and install SSH accordingly
             if [ -f /etc/redhat-release ]; then
@@ -120,7 +120,7 @@ main() {
 
         if [ "$InstallGit" = "y" ]; then
             # Inform the user about the installation process
-            echo -n "> Installing Git..."
+            echo "> Installing Git..."
 
             # Check the Linux distribution and install Git accordingly
             if [ -f /etc/redhat-release ]; then
@@ -146,12 +146,12 @@ main() {
     fi
 
     # Update remote URL to use SSH
-    if [[ $1 == "https://"* ]]; then
+    if [[ $SshUrl == "https://"* ]]; then
         echo "> Updating remote URL to use SSH..."
 
         # Extracting username and repository name using regular expressions
         regex="https://github.com/([^/]+)/([^/]+)\.git"
-        if [[ $1 =~ $regex ]]; then
+        if [[ $SshUrl =~ $regex ]]; then
             GithubUsername="${BASH_REMATCH[1]}"
             RepoName="${BASH_REMATCH[2]}"
             RepoName=$(echo "$RepoName" | tr '[:upper:]' '[:lower:]')  # Convert RepoName to lowercase
@@ -161,15 +161,27 @@ main() {
     fi
 
     # If the URL is already in SSH format, print the extracted values
-    if [[ $1 == "git@github.com:"* ]]; then
+    if [[ $SshUrl == "git@github.com:"* ]]; then
         regex="git@github.com:([^/]+)/([^/]+)\.git"
-        if [[ $1 =~ $regex ]]; then
+        if [[ $SshUrl =~ $regex ]]; then
             GithubUsername="${BASH_REMATCH[1]}"
             RepoName="${BASH_REMATCH[2]}"
             RepoName=$(echo "$RepoName" | tr '[:upper:]' '[:lower:]')  # Convert RepoName to lowercase
-            SshUrl="$1"
             git remote set-url origin "$SshUrl"
         fi
+    fi
+
+        echo "Cloning Git repository from $SshUrl..."
+
+        # Clone the Git repository into the current directory
+        git clone -q $SshUrl .
+
+        # Check if the clone was successful
+        if [ $? -eq 0 ]; then
+            echo "Repository cloned successfully."
+        else
+            echo "Failed to clone the repository. Exiting..."
+            exit 1
     fi
 
     # Setup variables for GitHub Actions workflow file
@@ -180,12 +192,12 @@ main() {
     if [ -f "$WorkflowFilePath" ]; then
         read -p "> The GitHub Actions file already exists. Do you want to delete it? (y/n): " deleteConfirmation
         if [ "$deleteConfirmation" == "y" ]; then
-            echo -n "> Deleting existing GitHub Actions file..."
+            echo "> Deleting existing GitHub Actions file..."
             rm "$WorkflowFilePath"
             echo -e "\r\033[K> Deleting existing GitHub Actions file... Successful"
             
             # Create GitHub Actions directory and file
-            echo -n "> Creating GitHub Actions directory and file..."  
+            echo "> Creating GitHub Actions directory and file..."  
             mkdir -p ./.github/workflows
             cat <<EOL > "$WorkflowFilePath"
 name: Auto Update -> $RepoName
@@ -221,7 +233,7 @@ EOL
         fi
     else
         # Create GitHub Actions directory and file
-        echo -n "> Creating GitHub Actions directory and file..."  
+        echo "> Creating GitHub Actions directory and file..."  
         mkdir -p ./.github/workflows
         cat <<EOL > "$WorkflowFilePath"
 name: Auto Update -> $RepoName
@@ -260,7 +272,7 @@ EOL
 
         if [ "$InstallDocker" = "y" ]; then
             # Inform the user about the installation process
-            echo -n "> Installing Docker..."
+            echo "> Installing Docker..."
 
             # Check the Linux distribution and install Docker accordingly
             if [ -f /etc/redhat-release ]; then
@@ -295,12 +307,12 @@ EOL
     if [ -f "$DockerFilePath" ]; then
         read -p "> The Dockerfile already exists. Do you want to delete it and create a new one? (y/n): " deleteConfirmation
         if [ "$deleteConfirmation" == "y" ]; then
-            echo -n "> Deleting existing Dockerfile..."
+            echo "> Deleting existing Dockerfile..."
             rm "$DockerFilePath"
             echo -e "\r\033[K> Deleting existing Dockerfile... Successful"
             
             # Create Dockerfile
-            echo -n "> Creating Dockerfile..."  
+            echo "> Creating Dockerfile..."  
             cat <<EOL > "$DockerFilePath"
 # Use an official Python runtime as a parent image
 FROM python:3.9
@@ -321,17 +333,16 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Define the command to run on container start
 CMD ["python3", "main.py"]
-
 EOL
-            echo -e "\r\033[K> Creating Dockerfile...   Successful"
-        else
-            echo "> Skipping deletion of Dockerfile."
-            exit 0
-        fi
+        echo -e "\r\033[K> Creating Dockerfile...   Successful"
     else
-        # Create Dockerfile
-        echo -n "> Creating Dockerfile..."  
-        cat <<EOL > "$DockerFilePath"
+        echo "> Skipping deletion of Dockerfile."
+        exit 0
+    fi
+else
+    # Create Dockerfile
+    echo "> Creating Dockerfile..."  
+    cat <<EOL > "$DockerFilePath"
 # Use an official Python runtime as a parent image
 FROM python:3.9
 
@@ -351,23 +362,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Define the command to run on container start
 CMD ["python3", "main.py"]
-
 EOL
-
-    echo "Cloning Git repository from $1..."
-
-    # Clone the Git repository into the current directory
-    git clone -q $1 .
-
-    # Check if the clone was successful
-    if [ $? -eq 0 ]; then
-        echo "Repository cloned successfully."
-    else
-        echo "Failed to clone the repository. Exiting..."
-        exit 1
-    fi
-
-    echo -e "\r\033[K> Creating Dockerfile...   Successful"
+        echo -e "\r\033[K> Creating Dockerfile...   Successful"
     fi
 
     # Setup permissions for Docker
@@ -445,7 +441,7 @@ EOL
     fi
 
     # Add the workflow file to Git
-    echo -n "> Adding all files to Git..."
+    echo "> Adding all files to Git..."
     git add -q .
     add_status=$?
     if [ $add_status -eq 0 ]; then
@@ -456,7 +452,7 @@ EOL
     fi
 
     # Commit the changes
-    echo -n "> Committing the changes..."
+    echo "> Committing the changes..."
     git commit -q -m "Everything set up for automatic GitHub pulls with Docker"
     commit_status=$?
     if [ $commit_status -eq 0 ]; then
@@ -467,7 +463,7 @@ EOL
     fi
 
     # Push the changes
-    echo -n "> Pushing the changes..."
+    echo "> Pushing the changes..."
     git push origin main > /dev/null 2>&1
     push_status=$?
     if [ $push_status -eq 0 ]; then
@@ -486,9 +482,9 @@ fi
 
 # Parse command-line options
 while [ "$#" -gt 0 ]; do
+    SshUrl="$1"
     case "$1" in
         --setup)
-            # Add setup logic here for setting up the server
             server
             ;;
         --v)
@@ -496,8 +492,7 @@ while [ "$#" -gt 0 ]; do
             ;;
         *)
             # Check if the argument matches either SSH or HTTPS GitHub repository patterns
-            if [[ "$1" =~ $ssh_pattern || "$1" =~ $https_pattern ]]; then
-                REPO_LINK="$1"
+            if [[ "$SshUrl" =~ $ssh_pattern || "$SshUrl" =~ $https_pattern ]]; then
                 main
             else
                 echo "> Invalid GitHub repository link. Please provide a valid link."
