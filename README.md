@@ -4,6 +4,17 @@ The GitHub Automated Puller is a bash script (`AutoSetup.sh`) that streamlines t
 
 ## Features
 
+
+
+sudo rm -r Dogiap.deb 
+sudo apt-get remove -y dogiap
+dpkg-deb --build Dogiap
+sudo apt-get install -f ~/Dogiap.deb
+which dogiap
+
+
+
+
 - Validates the provided GitHub repository link.
 - Generates an SSH key, if required, for authenticating with GitHub.
 - Updates the remote repository URL to use SSH instead of HTTPS.

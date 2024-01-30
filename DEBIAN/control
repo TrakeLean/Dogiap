@@ -1,0 +1,6 @@
+Package: dogiap
+Version: 1.0
+Architecture: all
+Maintainer: Tarek Lein <Tarek_rl99@hotmail.com>
+Description: Automates GitHub repository setup for continuous deployment within Docker. It keeps the repository up to date within the container with the help of GitHub actions and a server.
+Depends: docker, git, openssh-client
