@@ -25,9 +25,9 @@ def webhook():
                 raise ValueError("ContainerName is missing in the payload")
 
             # Run 'kill main', 'git pull' and 'python3 main.py' inside the container
-            os.system(f"docker exec {ContainerName} pkill -f main.py")
+            # os.system(f"docker exec {ContainerName} pkill -f main.py")
             os.system(f"docker exec {ContainerName} git pull")
-            os.system(f"docker exec {ContainerName} python3 main.py")
+            # os.system(f"docker exec {ContainerName} python3 main.py")
             
             return "Success"
         else:
