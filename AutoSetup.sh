@@ -242,11 +242,15 @@ FROM python
 # Set working directory
 WORKDIR /app
 
-# Copy files into the container
-COPY ../main.py .
+# Clone or pull the Git repository
+RUN git clone $1 .
+
+# Install dependencies (if needed)
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Define the command to run on container start
-CMD ["python", "main.py"]
+CMD ["python3", "main.py"]
 EOL
   echo -e "\r\033[K>✅ Creating Dockerfile...   Successful"
 else
