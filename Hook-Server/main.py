@@ -9,7 +9,7 @@ app = Flask(__name__)
 @app.route('/git-webhook', methods=['POST'])
 def webhook():
     try:
-        print("Webhook received")
+        print("Webhook received: ", ContainerName)
         payload = request.get_data(as_text=True)
         data = json.loads(payload)
 
