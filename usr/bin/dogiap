@@ -439,7 +439,7 @@ EOL
 
     # Add the workflow file to Git
     echo "> Adding all files to Git..."
-    git add -q .
+    git add . > /dev/null 2>&1
     add_status=$?
     if [ $add_status -eq 0 ]; then
         echo -e "\r\033[K> Adding all files to Git... Successful"
@@ -450,7 +450,7 @@ EOL
 
     # Commit the changes
     echo "> Committing the changes..."
-    git commit -q -m "Everything set up for automatic GitHub pulls with Docker"
+    git commit -m "Everything set up for automatic GitHub pulls with Docker" > /dev/null 2>&1
     commit_status=$?
     if [ $commit_status -eq 0 ]; then
         echo -e "\r\033[K> Committing the changes... Successful"
