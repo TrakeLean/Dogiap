@@ -430,7 +430,7 @@ EOL
         echo "> Changes detected. Committing the changes"
         
         # Commit the changes
-        git commit -m "Everything set up for automatic GitHub pulls with Docker"
+        git commit -m "Everything set up for automatic GitHub pulls with Docker" > /dev/null 2>&1
         commit_status=$?
 
         if [ $commit_status -eq 0 ]; then
