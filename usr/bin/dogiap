@@ -299,44 +299,7 @@ EOL
 
     # Setup variables for Docker file
     DockerFilePath="./Dockerfile"
-
-    # Check if Dockerfile already exists
-    if [ -f "$DockerFilePath" ]; then
-        read -p "> The Dockerfile already exists. Do you want to delete it and create a new one? (y/n): " deleteConfirmation
-        if [ "$deleteConfirmation" == "y" ]; then
-            echo "> Deleting existing Dockerfile..."
-            rm "$DockerFilePath"
-            echo -e "\r\033[K> Deleting existing Dockerfile... Successful"
-            
-            # Create Dockerfile
-            echo "> Creating Dockerfile..."  
-            cat <<EOL > "$DockerFilePath"
-# Use an official Python runtime as a parent image
-FROM python:3.9
-
-# Install Git
-RUN apt-get update && \
-    apt-get install -y git
-
-# Set working directory
-WORKDIR /app
-
-# Mount data directory as a volume
-VOLUME /app/data
-
-# Install dependencies (if needed)
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Define the command to run on container start
-CMD ["python3", "main.py"]
-EOL
-        echo -e "\r\033[K> Creating Dockerfile...   Successful"
-    else
-        echo "> Skipping deletion of Dockerfile."
-        exit 0
-    fi
-else
+    
     # Create Dockerfile
     echo "> Creating Dockerfile..."  
     cat <<EOL > "$DockerFilePath"
@@ -360,15 +323,15 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Define the command to run on container start
 CMD ["python3", "main.py"]
 EOL
-        echo -e "\r\033[K> Creating Dockerfile...   Successful"
-    fi
+    echo -e "\r\033[K> Creating Dockerfile...   Successful"
+
 
     # Setup permissions for Docker
     echo "> Setting up permissions for Docker..."
     sudo chmod 666 /var/run/docker.sock
 
     # Check if the Docker container already exists
-    if docker ps -a --format '{{.Names}}' | grep -q "^$container_name$"; then
+    if docker ps -a --format '{{.Names}}' | grep -q "^$RepoName$"; then
         echo "Container \"$RepoName\" already exists."
 
         # Prompt user for action
@@ -404,16 +367,7 @@ EOL
                 exit 1
             fi
         else
-            # Restart the existing Docker container
-            echo "> Restarting existing Docker container \"$RepoName\"..."
-            docker restart "$RepoName" > /dev/null 2>&1
-            restart_status=$?
-            if [ $restart_status -eq 0 ]; then
-                echo "> Restarting existing Docker container \"$RepoName\"... Successful"
-            else
-                echo "> Restarting existing Docker container \"$RepoName\"... Failed"
-                exit 1
-            fi
+            echo "> Skipping deletion of existing Docker container \"$RepoName\""
         fi
     else
         # Build and run the Docker image
