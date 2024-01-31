@@ -357,10 +357,8 @@ EOL
 
     # Check if the Docker container already exists
     if docker ps -a --format '{{.Names}}' | grep -q "^$RepoName$"; then
-        echo "> Container \"$RepoName\" already exists."
-
         # Prompt user for action
-        read -p "$(echo -e "${YELLOW}> Do you want to delete and build a new one (y/n)? ${NC}")" choice
+        read -p "$(echo -e "${YELLOW}> Container \"$RepoName\" already exists. Do you want to rebuild (y/n)? ${NC}")" choice
         if [ "$choice" == "y" ]; then
             echo "> Deleting existing Docker container \"$RepoName\""
             docker stop "$RepoName" > /dev/null 2>&1 && docker rm "$RepoName" > /dev/null 2>&1
@@ -452,7 +450,7 @@ EOL
             exit 1
         fi
     else
-        echo "> No changes to commit"
+        echo -e "${GREEN}> Repository is up-to-date, no changes to commit."
     fi
     exit 0
 }
