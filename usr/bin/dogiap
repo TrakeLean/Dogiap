@@ -166,6 +166,8 @@ main() {
             GithubUsername="${BASH_REMATCH[1]}"
             RepoName="${BASH_REMATCH[2]}"
             RepoName=$(echo "$RepoName" | tr '[:upper:]' '[:lower:]')  # Convert RepoName to lowercase
+             SshUrl="git@github.com:$GithubUsername/$RepoName.git"
+             git remote set-url origin "$SshUrl"
         fi
     fi
 
@@ -191,7 +193,7 @@ main() {
         if [ "$deleteConfirmation" == "y" ]; then
             echo "> Deleting existing GitHub Actions file..."
             rm "$WorkflowFilePath"
-            echo -e "\r\033[K> Deleting existing GitHub Actions file... Successful"
+            echo -e "\r\033[K> Deleting existing GitHub Actions file...\t\tSuccessful"
             
             # Create GitHub Actions directory and file
             echo "> Creating GitHub Actions directory and file..."  
@@ -223,7 +225,7 @@ restart-$RepoName:
         echo "> Webhook request sent successfully. Response: \$curl_response"
         exit 0
 EOL
-            echo -e "\r\033[K> Creating GitHub Actions directory and file...   Successful"
+            echo -e "\r\033[K> Creating GitHub Actions directory and file...\t\t  Successful"
         else
             echo "> Skipping deletion of GitHub Actions file."
             exit 0
@@ -259,7 +261,7 @@ restart-$RepoName:
         echo "> Webhook request sent successfully. Response: \$curl_response"
         exit 0
 EOL
-        echo -e "\r\033[K> Creating GitHub Actions directory and file...   Successful"
+        echo -e "\r\033[K> Creating GitHub Actions directory and file...\t\t  Successful"
     fi
 
     # Check if Docker is installed
@@ -323,12 +325,14 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Define the command to run on container start
 CMD ["python3", "main.py"]
 EOL
-    echo -e "\r\033[K> Creating Dockerfile...   Successful"
+    echo -e "\r\033[K> Creating Dockerfile...\t\t  Successful"
 
 
     # Setup permissions for Docker
-    echo "> Setting up permissions for Docker..."
-    sudo chmod 666 /var/run/docker.sock
+    echo "> Setting up permissions..."
+    sudo chmod 666 /var/run/docker.sock > /dev/null 2>&1
+    # Use chown to give the current user ownership of the current directory and its contents
+    chown -R "$whoami" "." > /dev/null 2>&1
 
     # Check if the Docker container already exists
     if docker ps -a --format '{{.Names}}' | grep -q "^$RepoName$"; then
@@ -348,18 +352,18 @@ EOL
                 docker build -t "$RepoName" . > /dev/null 2>&1
                 build_status=$?
                 if [ $build_status -eq 0 ]; then
-                    echo "> Building Docker image \"$RepoName\"... Successful"
+                    echo "> Building Docker image \"$RepoName\"...\t\tSuccessful"
                     echo "> Running Docker image \"$RepoName\"..."
                     docker run -it -d --name "$RepoName" "$RepoName"
                     run_status=$?
                     if [ $run_status -eq 0 ]; then
-                        echo "> Running Docker image \"$RepoName\"... Successful"
+                        echo "> Running Docker image \"$RepoName\"...\t\tSuccessful"
                     else
-                        echo "> Running Docker image \"$RepoName\"... Failed"
+                        echo "> Running Docker image \"$RepoName\"...\t\tFailed"
                         exit 1
                     fi
                 else
-                    echo "> Building Docker image \"$RepoName\"... Failed"
+                    echo "> Building Docker image \"$RepoName\"...\t\tFailed"
                     exit 1
                 fi
             else
@@ -375,18 +379,18 @@ EOL
         docker build -t "$RepoName" . > /dev/null 2>&1
         build_status=$?
         if [ $build_status -eq 0 ]; then
-            echo "> Building Docker image \"$RepoName\"... Successful"
+            echo "> Building Docker image \"$RepoName\"...\t\tSuccessful"
             echo "> Running Docker image \"$RepoName\"..."
             docker run -it -d --name "$RepoName" "$RepoName"
             run_status=$?
             if [ $run_status -eq 0 ]; then
-                echo "> Running Docker image \"$RepoName\"... Successful"
+                echo "> Running Docker image \"$RepoName\"...\t\tSuccessful"
             else
-                echo "> Running Docker image \"$RepoName\"... Failed"
+                echo "> Running Docker image \"$RepoName\"...\t\tFailed"
                 exit 1
             fi
         else
-            echo "> Building Docker image \"$RepoName\"... Failed"
+            echo "> Building Docker image \"$RepoName\"...\t\tFailed"
             exit 1
         fi
     fi
@@ -396,9 +400,9 @@ EOL
     git add . > /dev/null 2>&1
     add_status=$?
     if [ $add_status -eq 0 ]; then
-        echo -e "\r\033[K> Adding all files to Git... Successful"
+        echo -e "\r\033[K> Adding all files to Git...\t\tSuccessful"
     else
-        echo -e "\r\033[K> Adding all files to Git... Failed"
+        echo -e "\r\033[K> Adding all files to Git...\t\tFailed"
         exit 1
     fi
 
@@ -407,9 +411,9 @@ EOL
     git commit -m "Everything set up for automatic GitHub pulls with Docker" > /dev/null 2>&1
     commit_status=$?
     if [ $commit_status -eq 0 ]; then
-        echo -e "\r\033[K> Committing the changes... Successful"
+        echo -e "\r\033[K> Committing the changes...\t\tSuccessful"
     else
-        echo -e "\r\033[K> Committing the changes... Failed"
+        echo -e "\r\033[K> Committing the changes...\t\tFailed"
         exit 1
     fi
 
@@ -418,9 +422,9 @@ EOL
     git push origin main > /dev/null 2>&1
     push_status=$?
     if [ $push_status -eq 0 ]; then
-        echo -e "\r\033[K> Pushing the changes... Successful"
+        echo -e "\r\033[K> Pushing the changes...\t\tSuccessful"
     else
-        echo -e "\r\033[K> Pushing the changes... Failed"
+        echo -e "\r\033[K> Pushing the changes...\t\tFailed"
         exit 1
     fi
     exit 0
