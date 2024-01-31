@@ -181,7 +181,7 @@ main() {
             RepoName="${BASH_REMATCH[2]}"
             RepoName=$(echo "$RepoName" | tr '[:upper:]' '[:lower:]')  # Convert RepoName to lowercase
             SshUrl="git@github.com:$GithubUsername/$RepoName.git"
-            git remote set-url origin "$SshUrl"
+            git remote set-url origin "$SshUrl" > /dev/null 2>&1
         fi
         print_status "Updating remote URL to use SSH" "success"
     fi
@@ -201,7 +201,7 @@ main() {
 
     echo "> Cloning Git repository from $SshUrl"
     # Clone the Git repository into the current directory
-    git clone -q $SshUrl .
+    git clone -q $SshUrl . > /dev/null 2>&1
 
     # Check if the clone was successful
     if [ $? -eq 0 ]; then
