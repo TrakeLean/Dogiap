@@ -4,16 +4,16 @@
 VERSION="1.0.0"
 ssh_pattern="git@github.com:*/*"
 https_pattern="https://github.com/*/*"
+# ANSI color codes
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
 
 # Print status message to the terminal
 function print_status() {
     local message="$1"
     local result="$2"
-
-    # ANSI color codes
-    GREEN='\033[0;32m'
-    RED='\033[0;31m'
-    NC='\033[0m' # No Color
 
     if [ "$result" == "success" ]; then
         echo -e "\033[F\r> ${GREEN}$message${NC}"
@@ -41,7 +41,7 @@ version() {
 
 # Function to set up the server
 server() {
-    echo "> Work in progress: Setting up the server..."
+    echo "> Work in progress: Setting up the server"
     # Add your server setup logic here
     echo "> Server setup logic will be implemented in future releases."
     exit 1
@@ -56,19 +56,20 @@ main() {
     fi
 
     # Setup permissions for Docker
-    echo "> Setting up permissions..."
+    echo "> Setting up permissions"
     sudo chmod 666 /var/run/docker.sock > /dev/null 2>&1
     # Use chown to give the current user ownership of the current directory and its contents
     chown -R "$whoami" "." > /dev/null 2>&1
+    print_status "Setting up permissions" "success"
 
     # Check if SSH is available
     if ! command -v ssh &> /dev/null; then
         # Ask if the user wants to install SSH
-        read -p "> SSH is not installed. Do you want to install SSH? (y/n): " InstallSSH
+        read -p "$(echo -e "${YELLOW}> SSH is not installed. Do you want to install SSH? (y/n): ${NC}")" InstallSSH
 
         if [ "$InstallSSH" = "y" ]; then
             # Inform the user about the installation process
-            echo "> Installing SSH..."
+            echo "> Installing SSH"
 
             # Check the Linux distribution and install SSH accordingly
             if [ -f /etc/redhat-release ]; then
@@ -98,14 +99,14 @@ main() {
         echo "> No SSH key found."
 
         # Prompt user to generate SSH key
-        read -p "> Do you want to generate an SSH key? (y/n): " GenerateSsh
+        read -p "$(echo -e "${YELLOW}> Do you want to generate an SSH key? (y/n): ${NC}")" GenerateSsh
 
         if [ "$GenerateSsh" = "y" ]; then
             # Prompt user to enter email address
-            read -p ">🖊️ Enter your email address: " EmailAddress
+            read -p "$(echo -e "${YELLOW}> Enter your email address: ${NC}")" EmailAddress
 
             # Generate SSH key
-            echo "> Generating SSH key..."
+            echo "> Generating SSH key"
             ssh-keygen -t rsa -b 4096 -C "$EmailAddress"
 
             # Start the ssh-agent in the background
@@ -130,22 +131,22 @@ main() {
     fi
 
     # Check if SSH key is associated with GitHub
-    echo "> Testing SSH key connection to GitHub..."
+    echo "> Testing SSH key connection to GitHub"
     if ssh -T git@github.com 2>&1 | grep -q "successfully authenticated"; then
-        echo "> SSH key is connected to GitHub."
+        print_status "Testing SSH key connection to GitHub" "success"
     else
-        echo "> Unable to authenticate with GitHub using the SSH key."
+        print_status "Testing SSH key connection to GitHub" "failure"
         echo "> Please ensure that the SSH key is added to your GitHub account and try again."
         exit 1
     fi
     # HER ER JEG
     if ! command -v git &> /dev/null; then
         # Ask if the user wants to install Git
-        read -p "> Git is not installed. Do you want to install Git? (y/n): " InstallGit
+        read -p "$(echo -e "${YELLOW}> Git is not installed. Do you want to install Git? (y/n): ${NC}")" InstallGit
 
         if [ "$InstallGit" = "y" ]; then
             # Inform the user about the installation process
-            echo "> Installing Git..."
+            echo "> Installing Git"
 
             # Check the Linux distribution and install Git accordingly
             if [ -f /etc/redhat-release ]; then
@@ -171,7 +172,7 @@ main() {
     fi
     # Update remote URL to use SSH
     if [[ $SshUrl == "https://"* ]]; then
-        echo "> Updating remote URL to use SSH..."
+        echo "> Updating remote URL to use SSH"
 
         # Extracting username and repository name using regular expressions
         regex="https://github.com/([^/]+)/([^/]+)\.git"
@@ -198,7 +199,7 @@ main() {
         print_status "Updating remote URL to use SSH" "success"
     fi
 
-    echo "> Cloning Git repository from $SshUrl..."
+    echo "> Cloning Git repository from $SshUrl"
     # Clone the Git repository into the current directory
     git clone -q $SshUrl .
 
@@ -216,14 +217,14 @@ main() {
 
     # Check if GitHub Actions workflow file already exists
     if [ -f "$WorkflowFilePath" ]; then
-        read -p "> The GitHub Actions file already exists. Do you want to delete it? (y/n): " deleteConfirmation
+        read -p "$(echo -e "${YELLOW}> The GitHub Actions file already exists. Do you want to delete it? (y/n): ${NC}")" deleteConfirmation
         if [ "$deleteConfirmation" == "y" ]; then
-            echo "> Deleting existing GitHub Actions file..."
+            echo "> Deleting existing GitHub Actions file"
             rm "$WorkflowFilePath"
             print_status "Deleting existing GitHub Actions file" "success"
             
             # Create GitHub Actions directory and file
-            echo "> Creating GitHub Actions directory and file..."  
+            echo "> Creating GitHub Actions directory and file"  
             mkdir -p ./.github/workflows
             cat <<EOL > "$WorkflowFilePath"
 name: Auto Update -> $RepoName
@@ -259,7 +260,7 @@ EOL
         fi
     else
         # Create GitHub Actions directory and file
-        echo "> Creating GitHub Actions directory and file..."  
+        echo "> Creating GitHub Actions directory and file"  
         mkdir -p ./.github/workflows
         cat <<EOL > "$WorkflowFilePath"
 name: Auto Update -> $RepoName
@@ -294,11 +295,11 @@ EOL
     # Check if Docker is installed
     if ! command -v docker &> /dev/null; then
         # Ask if the user wants to install Docker
-        read -p "> Docker is not installed. Do you want to install Docker? (y/n): " InstallDocker
+        read -p "$(echo -e "${YELLOW}> Docker is not installed. Do you want to install Docker? (y/n): ${NC}")" InstallDocker
 
         if [ "$InstallDocker" = "y" ]; then
             # Inform the user about the installation process
-            echo "> Installing Docker..."
+            echo "> Installing Docker"
 
             # Check the Linux distribution and install Docker accordingly
             if [ -f /etc/redhat-release ]; then
@@ -330,7 +331,7 @@ EOL
     DockerFilePath="./Dockerfile"
     
     # Create Dockerfile
-    echo "> Creating Dockerfile..."  
+    echo "> Creating Dockerfile"  
     cat <<EOL > "$DockerFilePath"
 # Use an official Python runtime as a parent image
 FROM python:3.9
@@ -359,21 +360,21 @@ EOL
         echo "> Container \"$RepoName\" already exists."
 
         # Prompt user for action
-        read -p "> Do you want to delete and build a new one (y/n)? " choice
+        read -p "$(echo -e "${YELLOW}> Do you want to delete and build a new one (y/n)? ${NC}")" choice
         if [ "$choice" == "y" ]; then
-            echo "> Deleting existing Docker container \"$RepoName\"..."
+            echo "> Deleting existing Docker container \"$RepoName\""
             docker stop "$RepoName" > /dev/null 2>&1 && docker rm "$RepoName" > /dev/null 2>&1
             delete_status=$?
             if [ $delete_status -eq 0 ]; then
                 print_status "Deleting existing Docker container \"$RepoName\"" "success"
 
                 # Build and run the Docker image
-                echo "> Building Docker image \"$RepoName\"..."
+                echo "> Building Docker image \"$RepoName\""
                 docker build -t "$RepoName" . > /dev/null 2>&1
                 build_status=$?
                 if [ $build_status -eq 0 ]; then
                     print_status "Building Docker image \"$RepoName\"" "success"
-                    echo "> Running Docker image \"$RepoName\"..."
+                    echo "> Running Docker image \"$RepoName\""
                     docker run -it -d --name "$RepoName" "$RepoName" > /dev/null 2>&1
                     run_status=$?
                     if [ $run_status -eq 0 ]; then
@@ -395,12 +396,12 @@ EOL
         fi
     else
         # Build and run the Docker image
-        echo "> Building Docker image \"$RepoName\"..."
+        echo "> Building Docker image \"$RepoName\""
         docker build -t "$RepoName" . > /dev/null 2>&1
         build_status=$?
         if [ $build_status -eq 0 ]; then
             print_status "Building Docker image \"$RepoName\"" "success"
-            echo "> Running Docker image \"$RepoName\"..."
+            echo "> Running Docker image \"$RepoName\""
             docker run -it -d --name "$RepoName" "$RepoName" > /dev/null 2>&1
             run_status=$?
             if [ $run_status -eq 0 ]; then
@@ -416,7 +417,7 @@ EOL
     fi
 
     # Add the workflow file to Git
-    echo "> Adding all files to Git..."
+    echo "> Adding all files to Git"
     git add . > /dev/null 2>&1
     add_status=$?
     if [ $add_status -eq 0 ]; then
@@ -426,26 +427,32 @@ EOL
         exit 1
     fi
 
-    # Commit the changes
-    echo "> Committing the changes..."
-    git commit -m "Everything set up for automatic GitHub pulls with Docker" > /dev/null 2>&1
-    commit_status=$?
-    if [ $commit_status -eq 0 ]; then
-        print_status "Committing the changes" "success"
-    else
-        print_status "Committing the changes" "failure"
-        exit 1
-    fi
+    # Check if there are changes to commit
+    if [ -n "$(git status --porcelain)" ]; then
+        echo "> Changes detected. Committing the changes"
+        
+        # Commit the changes
+        git commit -m "Everything set up for automatic GitHub pulls with Docker"
+        commit_status=$?
 
-    # Push the changes
-    echo "> Pushing the changes..."
-    git push origin main > /dev/null 2>&1
-    push_status=$?
-    if [ $push_status -eq 0 ]; then
-        print_status "Pushing the changes" "success"
+        if [ $commit_status -eq 0 ]; then
+            print_status "Committing the changes" "success"
+            # Push the changes
+            echo "> Pushing the changes"
+            git push origin main > /dev/null 2>&1
+            push_status=$?
+            if [ $push_status -eq 0 ]; then
+                print_status "Pushing the changes" "success"
+            else
+                print_status "Pushing the changes" "failure"
+                exit 1
+            fi
+        else
+            print_status "Committing the changes" "failure"
+            exit 1
+        fi
     else
-        print_status "Pushing the changes" "failure"
-        exit 1
+        echo "> No changes to commit"
     fi
     exit 0
 }
