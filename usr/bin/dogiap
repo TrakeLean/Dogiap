@@ -9,7 +9,7 @@ https_pattern="https://github.com/*/*"
 usage() {
     echo -e "Usage: dogiap <GitHub repository link>"
     echo -e "Options:"
-    echo -e "  --setup\tSet up the server that will receive the webhook requests (place in its own folder)"
+    echo -e "  --setup\tSet up server for webhook requests (place in its own folder)"
     echo -e "  --v\t\tDisplay version information"
     exit 1
 }
@@ -33,6 +33,7 @@ main() {
     # Check if the current directory is empty
     if [ ! -z "$(ls -A)" ]; then
     echo "The current directory is not empty, please run this in an empty directory."
+    exit 1
     fi
 
     # Check if SSH is available
@@ -112,8 +113,7 @@ main() {
         echo "> Please ensure that the SSH key is added to your GitHub account and try again."
         exit 1
     fi
-
-    # Check if Git is installed
+    # HER ER JEG
     if ! command -v git &> /dev/null; then
         # Ask if the user wants to install Git
         read -p "> Git is not installed. Do you want to install Git? (y/n): " InstallGit
@@ -144,7 +144,6 @@ main() {
             exit 1
         fi
     fi
-
     # Update remote URL to use SSH
     if [[ $SshUrl == "https://"* ]]; then
         echo "> Updating remote URL to use SSH..."
@@ -167,21 +166,19 @@ main() {
             GithubUsername="${BASH_REMATCH[1]}"
             RepoName="${BASH_REMATCH[2]}"
             RepoName=$(echo "$RepoName" | tr '[:upper:]' '[:lower:]')  # Convert RepoName to lowercase
-            git remote set-url origin "$SshUrl"
         fi
     fi
 
-        echo "Cloning Git repository from $SshUrl..."
+    echo "> Cloning Git repository from $SshUrl..."
+    # Clone the Git repository into the current directory
+    git clone -q $SshUrl .
 
-        # Clone the Git repository into the current directory
-        git clone -q $SshUrl .
-
-        # Check if the clone was successful
-        if [ $? -eq 0 ]; then
-            echo "Repository cloned successfully."
-        else
-            echo "Failed to clone the repository. Exiting..."
-            exit 1
+    # Check if the clone was successful
+    if [ $? -eq 0 ]; then
+        echo "> Repository cloned successfully."
+    else
+        echo "> Failed to clone the repository. Exiting..."
+        exit 1
     fi
 
     # Setup variables for GitHub Actions workflow file
