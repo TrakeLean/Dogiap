@@ -5,6 +5,25 @@ VERSION="1.0.0"
 ssh_pattern="git@github.com:*/*"
 https_pattern="https://github.com/*/*"
 
+# Print status message to the terminal
+function print_status() {
+    local message="$1"
+    local result="$2"
+
+    # ANSI color codes
+    GREEN='\033[0;32m'
+    RED='\033[0;31m'
+    NC='\033[0m' # No Color
+
+    if [ "$result" == "success" ]; then
+        echo -e "\033[F\r> ${GREEN}$message${NC}"
+    else
+        echo -e "\033[F\r> ${RED}$message${NC}"
+    fi
+
+    sleep 0.25  # Adjust the sleep duration as needed
+}
+
 # Function to display usage information
 usage() {
     echo -e "Usage: dogiap <GitHub repository link>"
@@ -61,12 +80,12 @@ main() {
                 sudo apt-get install -y openssh-client
             else
                 # Unsupported Linux distribution
-                echo -e "\r\033[K> Unsupported Linux distribution. Please install SSH manually."
+                echo -e "> Unsupported Linux distribution. Please install SSH manually."
                 exit 1
             fi
 
             # Display success message
-            echo -e "\r\033[K> SSH has been installed successfully."
+            print_status "Installing SSH" "success"
         else
             # User chose not to install SSH
             echo "> SSH is required for this script. Exiting."
@@ -143,7 +162,7 @@ main() {
             fi
 
             # Display success message
-            echo -e "\r\033[K> Git has been installed successfully."
+            print_status "Installing Git" "success"
         else
             # User chose not to install Git
             echo "> Git is required for this script. Exiting."
@@ -163,6 +182,7 @@ main() {
             SshUrl="git@github.com:$GithubUsername/$RepoName.git"
             git remote set-url origin "$SshUrl"
         fi
+        print_status "Updating remote URL to use SSH" "success"
     fi
 
     # If the URL is already in SSH format, print the extracted values
@@ -172,9 +192,10 @@ main() {
             GithubUsername="${BASH_REMATCH[1]}"
             RepoName="${BASH_REMATCH[2]}"
             RepoName=$(echo "$RepoName" | tr '[:upper:]' '[:lower:]')  # Convert RepoName to lowercase
-             SshUrl="git@github.com:$GithubUsername/$RepoName.git"
-             git remote set-url origin "$SshUrl"
+            SshUrl="git@github.com:$GithubUsername/$RepoName.git"
+            # git remote set-url origin "$SshUrl"
         fi
+        print_status "Updating remote URL to use SSH" "success"
     fi
 
     echo "> Cloning Git repository from $SshUrl..."
@@ -183,9 +204,9 @@ main() {
 
     # Check if the clone was successful
     if [ $? -eq 0 ]; then
-        echo "> Repository cloned successfully."
+        print_status "Cloning Git repository from $SshUrl" "success"
     else
-        echo "> Failed to clone the repository. Exiting..."
+        print_status "Cloning Git repository from $SshUrl" "failure"
         exit 1
     fi
 
@@ -199,7 +220,7 @@ main() {
         if [ "$deleteConfirmation" == "y" ]; then
             echo "> Deleting existing GitHub Actions file..."
             rm "$WorkflowFilePath"
-            echo -e "\r\033[K> Deleting existing GitHub Actions file...\t\tSuccessful"
+            print_status "Deleting existing GitHub Actions file" "success"
             
             # Create GitHub Actions directory and file
             echo "> Creating GitHub Actions directory and file..."  
@@ -231,7 +252,7 @@ restart-$RepoName:
         echo "> Webhook request sent successfully. Response: \$curl_response"
         exit 0
 EOL
-            echo -e "\r\033[K> Creating GitHub Actions directory and file...\t\t  Successful"
+            print_status "Creating GitHub Actions directory and file" "success"
         else
             echo "> Skipping deletion of GitHub Actions file."
             exit 0
@@ -267,7 +288,7 @@ restart-$RepoName:
         echo "> Webhook request sent successfully. Response: \$curl_response"
         exit 0
 EOL
-        echo -e "\r\033[K> Creating GitHub Actions directory and file...\t\t  Successful"
+        print_status "Creating GitHub Actions directory and file" "success"
     fi
 
     # Check if Docker is installed
@@ -289,7 +310,7 @@ EOL
                 sudo apt-get install -y docker.io
             else
                 # Unsupported Linux distribution
-                echo -e "\r\033[K> Unsupported Linux distribution. Please install Docker manually."
+                echo -e "> Unsupported Linux distribution. Please install Docker manually."
                 exit 1
             fi
 
@@ -297,7 +318,7 @@ EOL
             sudo systemctl start docker
 
             # Display success message
-            echo -e "\r\033[K> Docker has been installed successfully."
+            print_status "Installing Docker" "success"
         else
             # User chose not to install Docker
             echo "> Docker is required for this script. Exiting."
@@ -331,42 +352,42 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Define the command to run on container start
 CMD ["python3", "main.py"]
 EOL
-    echo -e "\r\033[K> Creating Dockerfile...\t\t  Successful"
+    print_status "Creating Dockerfile" "success"
 
     # Check if the Docker container already exists
     if docker ps -a --format '{{.Names}}' | grep -q "^$RepoName$"; then
-        echo "Container \"$RepoName\" already exists."
+        echo "> Container \"$RepoName\" already exists."
 
         # Prompt user for action
-        read -p "Do you want to delete and build a new one (y/n)? " choice
+        read -p "> Do you want to delete and build a new one (y/n)? " choice
         if [ "$choice" == "y" ]; then
             echo "> Deleting existing Docker container \"$RepoName\"..."
             docker stop "$RepoName" > /dev/null 2>&1 && docker rm "$RepoName" > /dev/null 2>&1
             delete_status=$?
             if [ $delete_status -eq 0 ]; then
-                echo "> Deleted existing Docker container \"$RepoName\""
+                print_status "Deleting existing Docker container \"$RepoName\"" "success"
 
                 # Build and run the Docker image
                 echo "> Building Docker image \"$RepoName\"..."
                 docker build -t "$RepoName" . > /dev/null 2>&1
                 build_status=$?
                 if [ $build_status -eq 0 ]; then
-                    echo "> Building Docker image \"$RepoName\"...\t\tSuccessful"
+                    print_status "Building Docker image \"$RepoName\"" "success"
                     echo "> Running Docker image \"$RepoName\"..."
-                    docker run -it -d --name "$RepoName" "$RepoName"
+                    docker run -it -d --name "$RepoName" "$RepoName" > /dev/null 2>&1
                     run_status=$?
                     if [ $run_status -eq 0 ]; then
-                        echo "> Running Docker image \"$RepoName\"...\t\tSuccessful"
+                        print_status "Running Docker image \"$RepoName\"" "success"
                     else
-                        echo "> Running Docker image \"$RepoName\"...\t\tFailed"
+                        print_status "Running Docker image \"$RepoName\"" "failure"
                         exit 1
                     fi
                 else
-                    echo "> Building Docker image \"$RepoName\"...\t\tFailed"
+                    print_status "Building Docker image \"$RepoName\"" "failure"
                     exit 1
                 fi
             else
-                echo "> Failed to delete existing Docker container \"$RepoName\""
+                print_status "Deleting existing Docker container \"$RepoName\"" "failure"
                 exit 1
             fi
         else
@@ -378,18 +399,18 @@ EOL
         docker build -t "$RepoName" . > /dev/null 2>&1
         build_status=$?
         if [ $build_status -eq 0 ]; then
-            echo "> Building Docker image \"$RepoName\"...\t\tSuccessful"
+            print_status "Building Docker image \"$RepoName\"" "success"
             echo "> Running Docker image \"$RepoName\"..."
-            docker run -it -d --name "$RepoName" "$RepoName"
+            docker run -it -d --name "$RepoName" "$RepoName" > /dev/null 2>&1
             run_status=$?
             if [ $run_status -eq 0 ]; then
-                echo "> Running Docker image \"$RepoName\"...\t\tSuccessful"
+                print_status "Running Docker image \"$RepoName\"" "success"
             else
-                echo "> Running Docker image \"$RepoName\"...\t\tFailed"
+                print_status "Running Docker image \"$RepoName\"" "failure"
                 exit 1
             fi
         else
-            echo "> Building Docker image \"$RepoName\"...\t\tFailed"
+            print_status "Building Docker image \"$RepoName\"" "failure"
             exit 1
         fi
     fi
@@ -399,9 +420,9 @@ EOL
     git add . > /dev/null 2>&1
     add_status=$?
     if [ $add_status -eq 0 ]; then
-        echo -e "\r\033[K> Adding all files to Git...\t\tSuccessful"
+        print_status "Adding all files to Git" "success"
     else
-        echo -e "\r\033[K> Adding all files to Git...\t\tFailed"
+        print_status "Adding all files to Git" "failure"
         exit 1
     fi
 
@@ -410,9 +431,9 @@ EOL
     git commit -m "Everything set up for automatic GitHub pulls with Docker" > /dev/null 2>&1
     commit_status=$?
     if [ $commit_status -eq 0 ]; then
-        echo -e "\r\033[K> Committing the changes...\t\tSuccessful"
+        print_status "Committing the changes" "success"
     else
-        echo -e "\r\033[K> Committing the changes...\t\tFailed"
+        print_status "Committing the changes" "failure"
         exit 1
     fi
 
@@ -421,9 +442,9 @@ EOL
     git push origin main > /dev/null 2>&1
     push_status=$?
     if [ $push_status -eq 0 ]; then
-        echo -e "\r\033[K> Pushing the changes...\t\tSuccessful"
+        print_status "Pushing the changes" "success"
     else
-        echo -e "\r\033[K> Pushing the changes...\t\tFailed"
+        print_status "Pushing the changes" "failure"
         exit 1
     fi
     exit 0
