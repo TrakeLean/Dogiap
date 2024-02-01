@@ -343,11 +343,10 @@ RUN apt-get update && \
 # Set working directory
 WORKDIR /app
 
-# Mount data directory as a volume
-VOLUME /app/data
+# Copy everything from the host to the container
+COPY . .
 
 # Install dependencies (if needed)
-COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Define the command to run on container start
