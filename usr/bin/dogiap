@@ -181,6 +181,7 @@ main() {
     else
         # Extracting username and repository name using regular expressions
         regex="https://github.com/([^/]+)/([^/]+)\.git"
+        echo $CurrentRemoteUrl
         if [[ $CurrentRemoteUrl =~ $regex ]]; then
             GithubUsername="${BASH_REMATCH[1]}"
             RepoName="${BASH_REMATCH[2]}"
