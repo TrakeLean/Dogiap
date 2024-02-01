@@ -13,7 +13,7 @@ sudo apt-get install -f ~/Dogiap.deb
 which dogiap
 
 # Remove the .deb file
-sudo dpkg -i ~/Dogiap.deb
+sudo rm ~/Dogiap.deb
 
 # apt remove dogiap
 sudo apt-get remove -y dogiap
