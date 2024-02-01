@@ -16,9 +16,9 @@ function print_status() {
     local result="$2"
 
     if [ "$result" == "success" ]; then
-        echo -e "\033[F\r> ${GREEN}$message${NC}"
+        echo -e "\033[F\r> ${GREEN}$message${NC}                                        "
     else
-        echo -e "\033[F\r> ${RED}$message${NC}"
+        echo -e "\033[F\r> ${RED}$message${NC}                                          "
     fi
 
     sleep 0.25  # Adjust the sleep duration as needed
@@ -139,7 +139,7 @@ main() {
         echo "> Please ensure that the SSH key is added to your GitHub account and try again."
         exit 1
     fi
-    # HER ER JEG
+    
     if ! command -v git &> /dev/null; then
         # Ask if the user wants to install Git
         read -p "$(echo -e "${YELLOW}> Git is not installed. Do you want to install Git? (y/n): ${NC}")" InstallGit
@@ -170,33 +170,30 @@ main() {
             exit 1
         fi
     fi
-    # Update remote URL to use SSH
-    if [[ $SshUrl == "https://"* ]]; then
-        echo "> Updating remote URL to use SSH"
 
+    echo "> Updating remote URL to use SSH"
+    # Get the current remote URL
+    CurrentRemoteUrl=$(git remote get-url origin) > /dev/null 2>&1
+
+    # Check if the current remote URL is already in SSH format
+    if [[ $CurrentRemoteUrl == "git@github.com:"* ]]; then
+        print_status "Updating remote URL to use SSH" "success"
+    else
         # Extracting username and repository name using regular expressions
         regex="https://github.com/([^/]+)/([^/]+)\.git"
-        if [[ $SshUrl =~ $regex ]]; then
+        if [[ $CurrentRemoteUrl =~ $regex ]]; then
             GithubUsername="${BASH_REMATCH[1]}"
             RepoName="${BASH_REMATCH[2]}"
             RepoName=$(echo "$RepoName" | tr '[:upper:]' '[:lower:]')  # Convert RepoName to lowercase
             SshUrl="git@github.com:$GithubUsername/$RepoName.git"
-            git remote set-url origin "$SshUrl" > /dev/null 2>&1
-        fi
-        print_status "Updating remote URL to use SSH" "success"
-    fi
 
-    # If the URL is already in SSH format, print the extracted values
-    if [[ $SshUrl == "git@github.com:"* ]]; then
-        regex="git@github.com:([^/]+)/([^/]+)\.git"
-        if [[ $SshUrl =~ $regex ]]; then
-            GithubUsername="${BASH_REMATCH[1]}"
-            RepoName="${BASH_REMATCH[2]}"
-            RepoName=$(echo "$RepoName" | tr '[:upper:]' '[:lower:]')  # Convert RepoName to lowercase
-            SshUrl="git@github.com:$GithubUsername/$RepoName.git"
-            # git remote set-url origin "$SshUrl"
+            # Update the remote URL to use SSH
+            if git remote set-url origin "$SshUrl" > /dev/null 2>&1; then
+                print_status "Updating remote URL to use SSH" "success"
+            else
+                print_status "Failed to update remote URL to use SSH" "failure"
+            fi
         fi
-        print_status "Updating remote URL to use SSH" "success"
     fi
 
     echo "> Cloning Git repository from $SshUrl"
