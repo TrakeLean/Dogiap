@@ -16,9 +16,9 @@ function print_status() {
     local result="$2"
 
     if [ "$result" == "success" ]; then
-        echo -e "\033[F\r> ${GREEN}$message${NC}                                        "
+        echo -e "\033[F\r> ${GREEN}$message${NC}                   "
     else
-        echo -e "\033[F\r> ${RED}$message${NC}                                          "
+        echo -e "\033[F\r> ${RED}$message${NC}                     "
     fi
 
     sleep 0.25  # Adjust the sleep duration as needed
@@ -171,32 +171,6 @@ main() {
         fi
     fi
 
-    echo "> Updating remote URL to use SSH"
-    # Get the current remote URL
-    CurrentRemoteUrl=$(git remote get-url origin) > /dev/null 2>&1
-
-    # Check if the current remote URL is already in SSH format
-    if [[ $CurrentRemoteUrl == "git@github.com:"* ]]; then
-        print_status "Updating remote URL to use SSH" "success"
-    else
-        # Extracting username and repository name using regular expressions
-        regex="https://github.com/([^/]+)/([^/]+)\.git"
-        echo $CurrentRemoteUrl
-        if [[ $CurrentRemoteUrl =~ $regex ]]; then
-            GithubUsername="${BASH_REMATCH[1]}"
-            RepoName="${BASH_REMATCH[2]}"
-            RepoName=$(echo "$RepoName" | tr '[:upper:]' '[:lower:]')  # Convert RepoName to lowercase
-            SshUrl="git@github.com:$GithubUsername/$RepoName.git"
-
-            # Update the remote URL to use SSH
-            if git remote set-url origin "$SshUrl" > /dev/null 2>&1; then
-                print_status "Updating remote URL to use SSH" "success"
-            else
-                print_status "Failed to update remote URL to use SSH" "failure"
-            fi
-        fi
-    fi
-
     echo "> Cloning Git repository from $SshUrl"
     # Clone the Git repository into the current directory
     git clone -q $SshUrl . > /dev/null 2>&1
@@ -207,6 +181,49 @@ main() {
     else
         print_status "Cloning Git repository from $SshUrl" "failure"
         exit 1
+    fi
+
+    # Get the current remote URL
+    CurrentRemoteUrl=$(git remote get-url origin) > /dev/null 2>&1
+
+    # Check if the current remote URL is already in SSH format
+    if [[ $CurrentRemoteUrl == "git@github.com:"* ]]; then
+        # Extracting username and repository name using regular expressions
+        regex="git@github.com:([^\/]+)\/([^\/]+)\.git"
+        if [[ $CurrentRemoteUrl =~ $regex ]]; then
+            if [[ ${#BASH_REMATCH[@]} -eq 3 ]]; then
+                GithubUsername="${BASH_REMATCH[1]}"
+                RepoName="${BASH_REMATCH[2]}"
+                RepoName=$(echo "$RepoName" | tr '[:upper:]' '[:lower:]')  # Convert RepoName to lowercase
+                SshUrl="git@github.com:$GithubUsername/$RepoName.git"
+            else
+                echo ""
+                print_status "Failed to extract username and repository name from SSH URL." "failure"
+                exit 1
+            fi
+    else
+        # Extracting username and repository name using regular expressions
+        regex="https:\/\/github.com\/([^\/]+)\/([^\/]+)\.git"
+        if [[ $CurrentRemoteUrl =~ $regex ]]; then
+            if [[ ${#BASH_REMATCH[@]} -eq 3 ]]; then
+                echo "> Updating remote URL to use SSH"
+                GithubUsername="${BASH_REMATCH[1]}"
+                RepoName="${BASH_REMATCH[2]}"
+                RepoName=$(echo "$RepoName" | tr '[:upper:]' '[:lower:]')  # Convert RepoName to lowercase
+                SshUrl="git@github.com:$GithubUsername/$RepoName.git"
+            else
+                echo ""
+                print_status "Failed to extract username and repository name from HTTP URL." "failure"
+                exit 1
+            fi
+
+            # Update the remote URL to use SSH
+            if git remote set-url origin "$SshUrl" > /dev/null 2>&1; then
+                print_status "Updating remote URL to use SSH" "success"
+            else
+                print_status "Failed to update remote URL to use SSH" "failure"
+            fi
+        fi
     fi
 
     # Setup variables for GitHub Actions workflow file
