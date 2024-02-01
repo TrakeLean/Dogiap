@@ -9,7 +9,6 @@ app = Flask(__name__)
 @app.route('/git-webhook', methods=['POST'])
 def webhook():
     try:
-        print("Webhook received: ")
         payload = request.get_data(as_text=True)
         data = json.loads(payload)
 
@@ -17,17 +16,15 @@ def webhook():
         github_event = request.headers.get('X-GitHub-Event')
 
         if github_event == 'push':
-            
             # Ensure ContainerName comes from a trusted source
             ContainerName = data.get("ContainerName")
-            print("Webhook received from GitHub - Push event:", ContainerName)
             if ContainerName is None:
                 raise ValueError("ContainerName is missing in the payload")
+            
+            print("Webhook received from GitHub - Push event:", ContainerName)
 
-            # Run 'kill main', 'git pull' and 'python3 main.py' inside the container
-            # os.system(f"docker exec {ContainerName} pkill -f main.py")
+            # Send git pull command to the container
             os.system(f"docker exec {ContainerName} git pull")
-            # os.system(f"docker exec {ContainerName} python3 main.py")
             
             return "Success"
         else:

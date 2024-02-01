@@ -118,12 +118,6 @@ main() {
                 echo "> Generating SSH key"
                 ssh-keygen -t rsa -b 4096 -C "$EmailAddress"
 
-                # Start the ssh-agent in the background
-                eval "$(ssh-agent -s)"
-
-                # Add SSH private key to the ssh-agent
-                ssh-add ~/.ssh/id_rsa
-
                 # Display the SSH public key
                 echo "> Add the following SSH public key to your Git hosting service:"
                 echo ""
@@ -141,6 +135,15 @@ main() {
                 echo "> Invalid input. Please enter 'y' or 'n'."
             fi
         done
+    fi
+
+    # Start the ssh-agent in the background
+    eval "$(ssh-agent -s)"
+
+    # Check if the SSH key is already added
+    if ! ssh-add -l | grep -q "$HOME/.ssh/id_rsa"; then
+        # If not added, add the SSH private key to the ssh-agent
+        ssh-add ~/.ssh/id_rsa
     fi
 
     # Check if SSH key is associated with GitHub
@@ -344,6 +347,12 @@ EOL
 # Use an official Python runtime as a parent image
 FROM python:3.9
 
+# Create a non-root user
+RUN useradd -ms /bin/bash $GithubUsername
+
+# Set the user
+USER $GithubUsername
+
 # Install Git
 RUN apt-get update && \
     apt-get install -y git
@@ -357,9 +366,13 @@ COPY . .
 # Install dependencies (if needed)
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Make sure GitHub is a known host 
+echo "ssh-keyscan github.com >> ~/.ssh/known_hosts"
+
 # Define the command to run on container start
 CMD ["python3", "main.py"]
 EOL
+
     print_status "Creating Dockerfile" "success"
 
     # Check if the Docker container already exists
