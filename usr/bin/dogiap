@@ -197,10 +197,11 @@ main() {
                 RepoName=$(echo "$RepoName" | tr '[:upper:]' '[:lower:]')  # Convert RepoName to lowercase
                 SshUrl="git@github.com:$GithubUsername/$RepoName.git"
             else
-                echo ""
+                echo " "
                 print_status "Failed to extract username and repository name from SSH URL." "failure"
                 exit 1
             fi
+        fi
     else
         # Extracting username and repository name using regular expressions
         regex="https:\/\/github.com\/([^\/]+)\/([^\/]+)\.git"
@@ -211,17 +212,17 @@ main() {
                 RepoName="${BASH_REMATCH[2]}"
                 RepoName=$(echo "$RepoName" | tr '[:upper:]' '[:lower:]')  # Convert RepoName to lowercase
                 SshUrl="git@github.com:$GithubUsername/$RepoName.git"
+
+                # Update the remote URL to use SSH
+                if git remote set-url origin "$SshUrl" > /dev/null 2>&1; then
+                    print_status "Updating remote URL to use SSH" "success"
+                else
+                    print_status "Failed to update remote URL to use SSH" "failure"
+                fi
             else
-                echo ""
+                echo " "
                 print_status "Failed to extract username and repository name from HTTP URL." "failure"
                 exit 1
-            fi
-
-            # Update the remote URL to use SSH
-            if git remote set-url origin "$SshUrl" > /dev/null 2>&1; then
-                print_status "Updating remote URL to use SSH" "success"
-            else
-                print_status "Failed to update remote URL to use SSH" "failure"
             fi
         fi
     fi
