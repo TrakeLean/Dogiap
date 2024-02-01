@@ -217,6 +217,7 @@ main() {
         read -p "$(echo -e "${YELLOW}> The GitHub Actions file already exists. Do you want to rebuild it? (y/n): ${NC}")" rebuildConfirmation
         if [ "$rebuildConfirmation" = "y" ]; then
             rm -rf ./.github
+        fi
     fi
 
     # Create GitHub Actions directory and file if it doesn't exist
