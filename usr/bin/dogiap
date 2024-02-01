@@ -138,12 +138,12 @@ main() {
     fi
 
     # Start the ssh-agent in the background
-    eval "$(ssh-agent -s)"
+    eval "$(ssh-agent -s)"  > /dev/null 2>&1
 
     # Check if the SSH key is already added
     if ! ssh-add -l | grep -q "$HOME/.ssh/id_rsa"; then
         # If not added, add the SSH private key to the ssh-agent
-        ssh-add ~/.ssh/id_rsa
+        ssh-add ~/.ssh/id_rsa > /dev/null 2>&1
     fi
 
     # Check if SSH key is associated with GitHub
@@ -367,7 +367,7 @@ COPY . .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Make sure GitHub is a known host 
-echo "ssh-keyscan github.com >> ~/.ssh/known_hosts"
+RUN echo "ssh-keyscan github.com >> ~/.ssh/known_hosts"
 
 # Define the command to run on container start
 CMD ["python3", "main.py"]
@@ -395,7 +395,7 @@ EOL
                     if [ $build_status -eq 0 ]; then
                         print_status "Building Docker image \"$RepoName\"" "success"
                         echo "> Running Docker image \"$RepoName\""
-                        docker run -it -d --name "$RepoName" "$RepoName" > /dev/null 2>&1
+                        docker run -d --name "$RepoName" "$RepoName" > /dev/null 2>&1
                         run_status=$?
                         if [ $run_status -eq 0 ]; then
                             print_status "Running Docker image \"$RepoName\"" "success"
