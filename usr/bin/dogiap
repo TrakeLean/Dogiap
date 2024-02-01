@@ -214,77 +214,41 @@ main() {
 
     # Check if GitHub Actions workflow file already exists
     if [ -f "$WorkflowFilePath" ]; then
-        read -p "$(echo -e "${YELLOW}> The GitHub Actions file already exists. Do you want to delete it? (y/n): ${NC}")" deleteConfirmation
-        if [ "$deleteConfirmation" == "y" ]; then
-            echo "> Deleting existing GitHub Actions file"
-            rm "$WorkflowFilePath"
-            print_status "Deleting existing GitHub Actions file" "success"
-            
-            # Create GitHub Actions directory and file
-            echo "> Creating GitHub Actions directory and file"  
-            mkdir -p ./.github/workflows
-            cat <<EOL > "$WorkflowFilePath"
-name: Auto Update -> $RepoName
+        read -p "$(echo -e "${YELLOW}> The GitHub Actions file already exists. Do you want to rebuild it? (y/n): ${NC}")" rebuildConfirmation
+        if [ "$rebuildConfirmation" = "y" ]; then
+            rm -rf ./.github
+    fi
 
-on:
-push:
-    branches:
-    - main
-
-jobs:
-restart-$RepoName:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout to the branch
-        uses: actions/checkout@v2
-
-    - name: Send POST request to restart $RepoName
-        run: |
-        curl_response=\$(curl -X POST "$WebHookServerUrl" -H "Content-Type: application/json" -H "X-GitHub-Event: push" --data '{"ContainerName": "$RepoName"}' --fail --silent --show-error)
-        
-        if [ \$? -ne 0 ]; then
-            echo "> Failed to send webhook request"
-            exit 1
-        fi
-        
-        echo "> Webhook request sent successfully. Response: \$curl_response"
-        exit 0
-EOL
-            print_status "Creating GitHub Actions directory and file" "success"
-        else
-            echo "> Skipping deletion of GitHub Actions file."
-            exit 0
-        fi
-    else
-        # Create GitHub Actions directory and file
+    # Create GitHub Actions directory and file if it doesn't exist
+    if [ ! -f "$WorkflowFilePath" ]; then
         echo "> Creating GitHub Actions directory and file"  
         mkdir -p ./.github/workflows
         cat <<EOL > "$WorkflowFilePath"
-name: Auto Update -> $RepoName
+    name: Auto Update -> $RepoName
 
-on:
-push:
-    branches:
-    - main
+    on:
+    push:
+        branches:
+        - main
 
-jobs:
-restart-$RepoName:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout to the branch
-        uses: actions/checkout@v2
+    jobs:
+    restart-$RepoName:
+        runs-on: ubuntu-latest
+        steps:
+        - name: Checkout to the branch
+            uses: actions/checkout@v2
 
-    - name: Send POST request to restart $RepoName
-        run: |
-        curl_response=\$(curl -X POST "$WebHookServerUrl" -H "Content-Type: application/json" -H "X-GitHub-Event: push" --data '{"ContainerName": "$RepoName"}' --fail --silent --show-error)
-        
-        if [ \$? -ne 0 ]; then
-            echo "> Failed to send webhook request"
-            exit 1
-        fi
-        
-        echo "> Webhook request sent successfully. Response: \$curl_response"
-        exit 0
+        - name: Send POST request to restart $RepoName
+            run: |
+            curl_response=\$(curl -X POST "$WebHookServerUrl" -H "Content-Type: application/json" -H "X-GitHub-Event: push" --data '{"ContainerName": "$RepoName"}' --fail --silent --show-error)
+
+            if [ \$? -ne 0 ]; then
+                echo "> Failed to send webhook request"
+                exit 1
+            fi
+
+            echo "> Webhook request sent successfully. Response: \$curl_response"
+            exit 0
 EOL
         print_status "Creating GitHub Actions directory and file" "success"
     fi
@@ -354,7 +318,7 @@ EOL
     # Check if the Docker container already exists
     if docker ps -a --format '{{.Names}}' | grep -q "^$RepoName$"; then
         # Prompt user for action
-        read -p "$(echo -e "${YELLOW}> Container \"$RepoName\" already exists. Do you want to rebuild (y/n)? ${NC}")" choice
+        read -p "$(echo -e "${YELLOW}> Container \"$RepoName\" already exists. Do you want to rebuild? (y/n): ${NC}")" choice
         if [ "$choice" == "y" ]; then
             echo "> Deleting existing Docker container \"$RepoName\""
             docker stop "$RepoName" > /dev/null 2>&1 && docker rm "$RepoName" > /dev/null 2>&1
