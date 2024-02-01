@@ -65,70 +65,79 @@ main() {
 
     # Check if SSH is available
     if ! command -v ssh &> /dev/null; then
-        # Ask if the user wants to install SSH
-        read -p "$(echo -e "${YELLOW}> SSH is not installed. Do you want to install SSH? (y/n): ${NC}")" InstallSSH
+        while true; do
+            # Ask if the user wants to install SSH
+            read -p "$(echo -e "${YELLOW}> SSH is not installed. Do you want to install SSH? (y/n): ${NC}")" InstallSSH
 
-        if [ "$InstallSSH" = "y" ]; then
-            # Inform the user about the installation process
-            echo "> Installing SSH"
+            if [ "$(echo "$InstallSSH" | tr '[:upper:]' '[:lower:]')" = "y" ]; then
+                # Inform the user about the installation process
+                echo "> Installing SSH"
 
-            # Check the Linux distribution and install SSH accordingly
-            if [ -f /etc/redhat-release ]; then
-                # For Red Hat-based systems (e.g., CentOS)
-                sudo yum install -y openssh
-            elif [ -f /etc/debian_version ]; then
-                # For Debian-based systems (e.g., Ubuntu)
-                sudo apt-get update
-                sudo apt-get install -y openssh-client
-            else
-                # Unsupported Linux distribution
-                echo -e "> Unsupported Linux distribution. Please install SSH manually."
+                # Check the Linux distribution and install SSH accordingly
+                if [ -f /etc/redhat-release ]; then
+                    # For Red Hat-based systems (e.g., CentOS)
+                    sudo yum install -y openssh
+                elif [ -f /etc/debian_version ]; then
+                    # For Debian-based systems (e.g., Ubuntu)
+                    sudo apt-get update
+                    sudo apt-get install -y openssh-client
+                else
+                    # Unsupported Linux distribution
+                    echo -e "> Unsupported Linux distribution. Please install SSH manually."
+                    exit 1
+                fi
+
+                # Display success message
+                print_status "Installing SSH" "success"
+                break
+            elif [ "$(echo "$InstallSSH" | tr '[:upper:]' '[:lower:]')" = "n" ]; then
+                # User chose not to install SSH
+                echo "> SSH is required for this script. Exiting."
                 exit 1
+            else
+                echo "> Invalid input. Please enter 'y' or 'n'."
             fi
-
-            # Display success message
-            print_status "Installing SSH" "success"
-        else
-            # User chose not to install SSH
-            echo "> SSH is required for this script. Exiting."
-            exit 1
-        fi
+        done
     fi
 
     # Check if SSH key exists
     if [ ! -f ~/.ssh/id_rsa ]; then
         echo "> No SSH key found."
+        while true; do
+            # Prompt user to generate SSH key
+            read -p "$(echo -e "${YELLOW}> Do you want to generate an SSH key? (y/n): ${NC}")" GenerateSsh
 
-        # Prompt user to generate SSH key
-        read -p "$(echo -e "${YELLOW}> Do you want to generate an SSH key? (y/n): ${NC}")" GenerateSsh
+            if [ "$(echo "$GenerateSsh" | tr '[:upper:]' '[:lower:]')" = "y" ]; then
+                # Prompt user to enter email address
+                read -p "$(echo -e "${YELLOW}> Enter your email address: ${NC}")" EmailAddress
 
-        if [ "$GenerateSsh" = "y" ]; then
-            # Prompt user to enter email address
-            read -p "$(echo -e "${YELLOW}> Enter your email address: ${NC}")" EmailAddress
+                # Generate SSH key
+                echo "> Generating SSH key"
+                ssh-keygen -t rsa -b 4096 -C "$EmailAddress"
 
-            # Generate SSH key
-            echo "> Generating SSH key"
-            ssh-keygen -t rsa -b 4096 -C "$EmailAddress"
+                # Start the ssh-agent in the background
+                eval "$(ssh-agent -s)"
 
-            # Start the ssh-agent in the background
-            eval "$(ssh-agent -s)"
+                # Add SSH private key to the ssh-agent
+                ssh-add ~/.ssh/id_rsa
 
-            # Add SSH private key to the ssh-agent
-            ssh-add ~/.ssh/id_rsa
+                # Display the SSH public key
+                echo "> Add the following SSH public key to your Git hosting service:"
+                echo ""
+                cat ~/.ssh/id_rsa.pub
+                echo ""
 
-            # Display the SSH public key
-            echo "> Add the following SSH public key to your Git hosting service:"
-            echo ""
-            cat ~/.ssh/id_rsa.pub
-            echo ""
-
-            # Prompt user to add SSH key to GitHub
-            echo "> Press Enter after adding the SSH key to continue."
-            read -r
-        else
-            echo "> Skipping SSH key generation. This is needed to connect to GitHub, exiting."
-            exit 1
-        fi
+                # Prompt user to add SSH key to GitHub
+                echo "> Press Enter after adding the SSH key to continue."
+                read -r
+                break
+            elif [ "$(echo "$GenerateSsh" | tr '[:upper:]' '[:lower:]')" = "n" ]; then
+                echo "> Skipping SSH key generation. This is needed to connect to GitHub, exiting."
+                exit 1
+            else
+                echo "> Invalid input. Please enter 'y' or 'n'."
+            fi
+        done
     fi
 
     # Check if SSH key is associated with GitHub
@@ -141,35 +150,41 @@ main() {
         exit 1
     fi
     
+    # Check if Git is available
     if ! command -v git &> /dev/null; then
-        # Ask if the user wants to install Git
-        read -p "$(echo -e "${YELLOW}> Git is not installed. Do you want to install Git? (y/n): ${NC}")" InstallGit
+        while true; do
+            # Ask if the user wants to install Git
+            read -p "$(echo -e "${YELLOW}> Git is not installed. Do you want to install Git? (y/n): ${NC}")" InstallGit
 
-        if [ "$InstallGit" = "y" ]; then
-            # Inform the user about the installation process
-            echo "> Installing Git"
+            if [ "$(echo "$InstallGit" | tr '[:upper:]' '[:lower:]')" = "y" ]; then
+                # Inform the user about the installation process
+                echo "> Installing Git"
 
-            # Check the Linux distribution and install Git accordingly
-            if [ -f /etc/redhat-release ]; then
-                # For Red Hat-based systems (e.g., CentOS)
-                sudo yum install -y git
-            elif [ -f /etc/debian_version ]; then
-                # For Debian-based systems (e.g., Ubuntu)
-                sudo apt-get update
-                sudo apt-get install -y git
-            else
-                # Unsupported Linux distribution
-                echo -e "\r\033[K> Unsupported Linux distribution. Please install Git manually."
+                # Check the Linux distribution and install Git accordingly
+                if [ -f /etc/redhat-release ]; then
+                    # For Red Hat-based systems (e.g., CentOS)
+                    sudo yum install -y git
+                elif [ -f /etc/debian_version ]; then
+                    # For Debian-based systems (e.g., Ubuntu)
+                    sudo apt-get update
+                    sudo apt-get install -y git
+                else
+                    # Unsupported Linux distribution
+                    echo -e "\r\033[K> Unsupported Linux distribution. Please install Git manually."
+                    exit 1
+                fi
+
+                # Display success message
+                print_status "Installing Git" "success"
+                break
+            elif [ "$(echo "$InstallGit" | tr '[:upper:]' '[:lower:]')" = "n" ]; then
+                # User chose not to install Git
+                echo "> Git is required for this script. Exiting."
                 exit 1
+            else
+                echo "> Invalid input. Please enter 'y' or 'n'."
             fi
-
-            # Display success message
-            print_status "Installing Git" "success"
-        else
-            # User chose not to install Git
-            echo "> Git is required for this script. Exiting."
-            exit 1
-        fi
+        done
     fi
 
     echo "> Cloning Git repository from $SshUrl"
@@ -234,18 +249,25 @@ main() {
 
     # Check if GitHub Actions workflow file already exists
     if [ -f "$WorkflowFilePath" ]; then
-        read -p "$(echo -e "${YELLOW}> The GitHub Actions file already exists. Do you want to rebuild it? (y/n): ${NC}")" rebuildConfirmation
-        if [ "$rebuildConfirmation" = "y" ]; then
-            rm -rf ./.github
-        fi
+        while true; do
+            read -p "$(echo -e "${YELLOW}> The GitHub Actions file already exists. Do you want to rebuild it? (y/n): ${NC}")" rebuildConfirmation
+            if [ "$(echo "$rebuildConfirmation" | tr '[:upper:]' '[:lower:]')" = "y" ]; then
+                rm -rf ./.github
+                break
+            elif [ "$(echo "$rebuildConfirmation" | tr '[:upper:]' '[:lower:]')" = "n" ]; then
+                break
+            else
+                echo "> Invalid input. Please enter 'y' or 'n'."
+            fi
+        done
     fi
 
     # Create GitHub Actions directory and file if it doesn't exist
     if [ ! -f "$WorkflowFilePath" ]; then
         echo "> Creating GitHub Actions directory and file"  
         mkdir -p ./.github/workflows
-        cat <<EOL > "$WorkflowFilePath"
-name: Auto Update -> $RepoName
+        cat <<EOL > "actiontest"
+name: Auto Update ->  $RepoName
 
 on:
   push:
@@ -253,13 +275,13 @@ on:
       - main
 
 jobs:
-  restart-$RepoName:
+  restart- $RepoName:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout to the branch
         uses: actions/checkout@v2
 
-      - name: Send POST request to restart $RepoName
+      - name: Send POST request to restart  $RepoName
         run: |
           curl_response=\$(curl -X POST "$WebHookServerUrl" -H "Content-Type: application/json" -H "X-GitHub-Event: push" --data '{"ContainerName": "$RepoName"}' --fail --silent --show-error)
 
@@ -276,37 +298,42 @@ EOL
 
     # Check if Docker is installed
     if ! command -v docker &> /dev/null; then
-        # Ask if the user wants to install Docker
-        read -p "$(echo -e "${YELLOW}> Docker is not installed. Do you want to install Docker? (y/n): ${NC}")" InstallDocker
+        while true; do
+            # Ask if the user wants to install Docker
+            read -p "$(echo -e "${YELLOW}> Docker is not installed. Do you want to install Docker? (y/n): ${NC}")" InstallDocker
 
-        if [ "$InstallDocker" = "y" ]; then
-            # Inform the user about the installation process
-            echo "> Installing Docker"
+            if [ "$(echo "$InstallDocker" | tr '[:upper:]' '[:lower:]')" = "y" ]; then
+                # Inform the user about the installation process
+                echo "> Installing Docker"
 
-            # Check the Linux distribution and install Docker accordingly
-            if [ -f /etc/redhat-release ]; then
-                # For Red Hat-based systems (e.g., CentOS)
-                sudo yum install -y docker
-            elif [ -f /etc/debian_version ]; then
-                # For Debian-based systems (e.g., Ubuntu)
-                sudo apt-get update
-                sudo apt-get install -y docker.io
-            else
-                # Unsupported Linux distribution
-                echo -e "> Unsupported Linux distribution. Please install Docker manually."
+                # Check the Linux distribution and install Docker accordingly
+                if [ -f /etc/redhat-release ]; then
+                    # For Red Hat-based systems (e.g., CentOS)
+                    sudo yum install -y docker
+                elif [ -f /etc/debian_version ]; then
+                    # For Debian-based systems (e.g., Ubuntu)
+                    sudo apt-get update
+                    sudo apt-get install -y docker.io
+                else
+                    # Unsupported Linux distribution
+                    echo -e "> Unsupported Linux distribution. Please install Docker manually."
+                    exit 1
+                fi
+
+                # Start Docker service
+                sudo systemctl start docker
+
+                # Display success message
+                print_status "Installing Docker" "success"
+                break
+            elif [ "$(echo "$InstallDocker" | tr '[:upper:]' '[:lower:]')" = "n" ]; then
+                # User chose not to install Docker
+                echo "> Docker is required for this script. Exiting."
                 exit 1
+            else
+                echo "> Invalid input. Please enter 'y' or 'n'."
             fi
-
-            # Start Docker service
-            sudo systemctl start docker
-
-            # Display success message
-            print_status "Installing Docker" "success"
-        else
-            # User chose not to install Docker
-            echo "> Docker is required for this script. Exiting."
-            exit 1
-        fi
+        done
     fi
 
     # Setup variables for Docker file
@@ -339,40 +366,47 @@ EOL
     # Check if the Docker container already exists
     if docker ps -a --format '{{.Names}}' | grep -q "^$RepoName$"; then
         # Prompt user for action
-        read -p "$(echo -e "${YELLOW}> Container \"$RepoName\" already exists. Do you want to rebuild? (y/n): ${NC}")" choice
-        if [ "$choice" == "y" ]; then
-            echo "> Deleting existing Docker container \"$RepoName\""
-            docker stop "$RepoName" > /dev/null 2>&1 && docker rm "$RepoName" > /dev/null 2>&1
-            delete_status=$?
-            if [ $delete_status -eq 0 ]; then
-                print_status "Deleting existing Docker container \"$RepoName\"" "success"
+        while true; do
+            read -p "$(echo -e "${YELLOW}> Container \"$RepoName\" already exists. Do you want to rebuild? (y/n): ${NC}")" choice
 
-                # Build and run the Docker image
-                echo "> Building Docker image \"$RepoName\""
-                docker build -t "$RepoName" . > /dev/null 2>&1
-                build_status=$?
-                if [ $build_status -eq 0 ]; then
-                    print_status "Building Docker image \"$RepoName\"" "success"
-                    echo "> Running Docker image \"$RepoName\""
-                    docker run -it -d --name "$RepoName" "$RepoName" > /dev/null 2>&1
-                    run_status=$?
-                    if [ $run_status -eq 0 ]; then
-                        print_status "Running Docker image \"$RepoName\"" "success"
+            if [ "$(echo "$choice" | tr '[:upper:]' '[:lower:]')" = "y" ]; then
+                echo "> Deleting existing Docker container \"$RepoName\""
+                docker stop "$RepoName" > /dev/null 2>&1 && docker rm "$RepoName" > /dev/null 2>&1
+                delete_status=$?
+                if [ $delete_status -eq 0 ]; then
+                    print_status "Deleting existing Docker container \"$RepoName\"" "success"
+
+                    # Build and run the Docker image
+                    echo "> Building Docker image \"$RepoName\""
+                    docker build -t "$RepoName" . > /dev/null 2>&1
+                    build_status=$?
+                    if [ $build_status -eq 0 ]; then
+                        print_status "Building Docker image \"$RepoName\"" "success"
+                        echo "> Running Docker image \"$RepoName\""
+                        docker run -it -d --name "$RepoName" "$RepoName" > /dev/null 2>&1
+                        run_status=$?
+                        if [ $run_status -eq 0 ]; then
+                            print_status "Running Docker image \"$RepoName\"" "success"
+                            break
+                        else
+                            print_status "Running Docker image \"$RepoName\"" "failure"
+                            exit 1
+                        fi
                     else
-                        print_status "Running Docker image \"$RepoName\"" "failure"
+                        print_status "Building Docker image \"$RepoName\"" "failure"
                         exit 1
                     fi
                 else
-                    print_status "Building Docker image \"$RepoName\"" "failure"
+                    print_status "Deleting existing Docker container \"$RepoName\"" "failure"
                     exit 1
                 fi
+            elif [ "$(echo "$choice" | tr '[:upper:]' '[:lower:]')" = "n" ]; then
+                echo "> Skipping deletion of existing Docker container \"$RepoName\""
+                break
             else
-                print_status "Deleting existing Docker container \"$RepoName\"" "failure"
-                exit 1
+                echo "> Invalid input. Please enter 'y' or 'n'."
             fi
-        else
-            echo "> Skipping deletion of existing Docker container \"$RepoName\""
-        fi
+        done
     else
         # Build and run the Docker image
         echo "> Building Docker image \"$RepoName\""
