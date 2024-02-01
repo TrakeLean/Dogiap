@@ -9,6 +9,9 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
+# Setup variables for GitHub Actions workflow file
+WorkflowFilePath="./.github/workflows/automatic-pull.yml"
+WebHookServerUrl="129.242.219.112:5000/git-webhook"
 
 # Print status message to the terminal
 function print_status() {
@@ -243,10 +246,6 @@ main() {
         fi
     fi
 
-    # Setup variables for GitHub Actions workflow file
-    WorkflowFilePath="./.github/workflows/automatic-pull.yml"
-    WebHookServerUrl="129.242.219.112:5000/git-webhook"
-
     # Check if GitHub Actions workflow file already exists
     if [ -f "$WorkflowFilePath" ]; then
         while true; do
@@ -266,7 +265,7 @@ main() {
     if [ ! -f "$WorkflowFilePath" ]; then
         echo "> Creating GitHub Actions directory and file"  
         mkdir -p ./.github/workflows
-        cat <<EOL > "actiontest"
+        cat <<EOL > "$WorkflowFilePath"
 name: Auto Update ->  $RepoName
 
 on:
