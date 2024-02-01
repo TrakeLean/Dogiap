@@ -58,8 +58,9 @@ main() {
     # Setup permissions for Docker
     echo "> Setting up permissions"
     sudo chmod 666 /var/run/docker.sock > /dev/null 2>&1
+
     # Use chown to give the current user ownership of the current directory and its contents
-    chown -R "$whoami" "." > /dev/null 2>&1
+    chown -R "$USER" "." > /dev/null 2>&1
     print_status "Setting up permissions" "success"
 
     # Check if SSH is available
