@@ -10,16 +10,13 @@ RUN apt-get update && \
 WORKDIR /app
 
 # Copy everything from the host to the container
-COPY . /app
-
-# Print the contents of the current directory for debugging and save to a file
-RUN ls -la > directory_contents.txt
+COPY . .
 
 # Install dependencies (if needed)
-# RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Expose port 5000
 EXPOSE 5000
 
 # Define the command to run on container start
-# CMD ["python3", "main.py"]
+CMD ["python3", "main.py"]
