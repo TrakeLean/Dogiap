@@ -10,7 +10,7 @@ RUN apt-get update && \
 WORKDIR /app
 
 # Copy everything from the host to the container
-COPY . .
+COPY . /app/
 
 RUN ls /srv/DogiapHookServer
 

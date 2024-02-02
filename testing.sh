@@ -174,6 +174,7 @@ configure_git_and_ssh() {
 function server() {
     DirectoryPath="/srv/DogiapHookServer"
     DockerfilePath="$DirectoryPath/Hook-Server/Dockerfile"
+
     DockerName="hook-server"
 
     docker build -t $DockerName -f $DockerfilePath $DirectoryPath
