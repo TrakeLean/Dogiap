@@ -15,6 +15,8 @@ COPY . /app
 # Install dependencies (if needed)
 # RUN pip install --no-cache-dir -r requirements.txt
 
+RUN ls
+
 # Expose port 5000
 EXPOSE 5000
 
