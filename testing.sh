@@ -173,6 +173,8 @@ configure_git_and_ssh() {
 
 function server() {
     DirectoryPath="/srv/DogiapHookServer"
+    DockerfilePath="$DirectoryPath/Hook-Server/Dockerfile"¨
+    DockerName="hook-server"
     # ANSI color codes
     GREEN='\033[0;32m'
     RED='\033[0;31m'
@@ -250,6 +252,72 @@ function server() {
     else
         print_status "Fetching the contents of 'Hook-Server' folder" "failed"
         exit 1
+    fi
+
+    # Check if the Docker container already exists
+    if docker ps -a --format '{{.Names}}' | grep -q "^$$DockerName"; then
+        # Prompt user for action
+        while true; do
+            read -p "$(echo -e "${YELLOW}> Container \"$$DockerName\" already exists. Do you want to rebuild? (y/n): ${NC}")" choice
+
+            if [ "$(echo "$choice" | tr '[:upper:]' '[:lower:]')" = "y" ]; then
+                echo "> Deleting existing Docker container \"$$DockerName\""
+                docker stop "$$DockerName" > /dev/null 2>&1 && docker rm "$$DockerName" > /dev/null 2>&1
+                delete_status=$?
+                if [ $delete_status -eq 0 ]; then
+                    print_status "Deleting existing Docker container \"$$DockerName\"" "success"
+
+                    # Build and run the Docker image
+                    echo "> Building Docker image \"$$DockerName\""
+                    docker build -t $DockerName -f "$DockerfilePath" "$DirectoryPath/Hook-Server" > /dev/null 2>&1
+                    build_status=$?
+                    if [ $build_status -eq 0 ]; then
+                        print_status "Building Docker image \"$$DockerName\"" "success"
+                        echo "> Running Docker image \"$$DockerName\""
+                        docker run -d -p 5000:5000 --name $DockerName $DockerName > /dev/null 2>&1
+
+                        run_status=$?
+                        if [ $run_status -eq 0 ]; then
+                            print_status "Running Docker image \"$$DockerName\"" "success"
+                            break
+                        else
+                            print_status "Running Docker image \"$$DockerName\"" "failure"
+                            exit 1
+                        fi
+                    else
+                        print_status "Building Docker image \"$$DockerName\"" "failure"
+                        exit 1
+                    fi
+                else
+                    print_status "Deleting existing Docker container \"$$DockerName\"" "failure"
+                    exit 1
+                fi
+            elif [ "$(echo "$choice" | tr '[:upper:]' '[:lower:]')" = "n" ]; then
+                echo "> Skipping deletion of existing Docker container \"$$DockerName\""
+                break
+            else
+                echo "> Invalid input. Please enter 'y' or 'n'."
+            fi
+        done
+    else
+        # Build and run the Docker image
+        echo "> Building Docker image \"$DockerName\""
+        docker build -t hook-server -f "$DockerfilePath" "$DirectoryPath/Hook-Server"
+        # if [ $build_status -eq 0 ]; then
+        #     print_status "Building Docker image \"$DockerName\"" "success"
+        #     echo "> Running Docker image \"$DockerName\""
+        #     docker run -d -p 5000:5000 --name $DockerName $DockerName > /dev/null 2>&1
+        #     run_status=$?
+        #     if [ $run_status -eq 0 ]; then
+        #         print_status "Running Docker image \"$DockerName\"" "success"
+        #     else
+        #         print_status "Running Docker image \"$DockerName\"" "failure"
+        #         exit 1
+        #     fi
+        # else
+        #     print_status "Building Docker image \"$DockerName\"" "failure"
+        #     exit 1
+        # fi
     fi
 }
 
