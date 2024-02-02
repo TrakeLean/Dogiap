@@ -177,8 +177,6 @@ function server() {
 
     DockerName="hook-server"
 
-    docker build -t $DockerName -f $DockerfilePath $DirectoryPath
-
     # ANSI color codes
     GREEN='\033[0;32m'
     RED='\033[0;31m'

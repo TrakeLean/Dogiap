@@ -12,7 +12,8 @@ WORKDIR /app
 # Copy everything from the host to the container
 COPY . /app/
 
-RUN ls
+# Debugging output
+RUN ls -l /app/
 
 # Install dependencies (if needed)
 RUN pip install --no-cache-dir -r requirements.txt
