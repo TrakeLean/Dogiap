@@ -10,10 +10,10 @@ RUN apt-get update && \
 WORKDIR /app
 
 # Copy everything from the host to the container
-COPY . .
+COPY . /app
 
 # Install dependencies (if needed)
-RUN pip install --no-cache-dir -r requirements.txt
+# RUN pip install --no-cache-dir -r requirements.txt
 
 # Expose port 5000
 EXPOSE 5000
