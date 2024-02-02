@@ -1,5 +1,5 @@
 # Use an official Python runtime as a parent image
-FROM python:3.9
+FROM python:3.10
 
 # Install Git, SSH and other dependencies
 RUN apt-get update && \
@@ -13,9 +13,7 @@ WORKDIR /app
 COPY . /app
 
 # Install dependencies (if needed)
-# RUN pip install --no-cache-dir -r requirements.txt
-
-RUN ls
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Expose port 5000
 EXPOSE 5000
