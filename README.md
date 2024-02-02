@@ -27,6 +27,10 @@ sudo dpkg -i ~/Dogiap.deb
 # If needed, fix dependencies
 sudo apt-get install -f
 
+#
+sudo rm ~/Dogiap.deb && sudo apt-get remove -y dogiap && dpkg-deb --build Dogiap && sudo dpkg -i ~/Dogiap.deb
+
+
 # Test
 dogiap git@github.com:TrakeLean/Dogiap.git
 

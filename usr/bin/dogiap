@@ -347,15 +347,13 @@ EOL
 # Use an official Python runtime as a parent image
 FROM python:3.9
 
-# Create a non-root user
-RUN useradd -ms /bin/bash $GithubUsername
-
-# Set the user
-USER $GithubUsername
-
-# Install Git
+# Install Git, SSH and other dependencies
 RUN apt-get update && \
-    apt-get install -y git
+    apt-get install -y \
+        git \
+
+# Custom label for metadata
+LABEL program_path=$PWD
 
 # Set working directory
 WORKDIR /app
@@ -365,9 +363,6 @@ COPY . .
 
 # Install dependencies (if needed)
 RUN pip install --no-cache-dir -r requirements.txt
-
-# Make sure GitHub is a known host 
-RUN echo "ssh-keyscan github.com >> ~/.ssh/known_hosts"
 
 # Define the command to run on container start
 CMD ["python3", "main.py"]
@@ -396,6 +391,7 @@ EOL
                         print_status "Building Docker image \"$RepoName\"" "success"
                         echo "> Running Docker image \"$RepoName\""
                         docker run -d --name "$RepoName" "$RepoName" > /dev/null 2>&1
+
                         run_status=$?
                         if [ $run_status -eq 0 ]; then
                             print_status "Running Docker image \"$RepoName\"" "success"
