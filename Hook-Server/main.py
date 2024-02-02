@@ -29,8 +29,12 @@ def webhook():
             
             # Do git pull from the ResultPath directory to update the program files
             cmd = f'cd {ResultPath.stdout.strip()} && git pull'
-            ResultPull = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-            print(ResultPull.stdout.strip())
+            subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            
+            # Restart the container
+            cmd = f'docker restart {ContainerName}'
+            subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            
             
             return "Success"
         else:
