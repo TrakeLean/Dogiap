@@ -12,7 +12,7 @@ WORKDIR /app
 # Copy everything from the host to the container
 COPY . /app/
 
-RUN ls /srv/DogiapHookServer
+RUN ls
 
 # Install dependencies (if needed)
 RUN pip install --no-cache-dir -r requirements.txt
