@@ -15,6 +15,7 @@ COPY . /app/
 # Debugging output
 RUN ls -l /app/
 
+RUN echo "Hello World"
 # Install dependencies (if needed)
 # RUN pip install --no-cache-dir -r requirements.txt
 
