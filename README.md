@@ -30,6 +30,9 @@ sudo apt-get install -f
 #
 sudo rm ~/Dogiap.deb && sudo apt-get remove -y dogiap && dpkg-deb --build Dogiap && sudo dpkg -i ~/Dogiap.deb
 
+#
+docker inspect --format '{{.Config.Labels.program_path}}' twitchbot
+
 
 # Test
 dogiap git@github.com:TrakeLean/Dogiap.git

@@ -2,6 +2,7 @@ from flask import Flask, request
 import json
 import os
 import time
+import subprocess
 
 app = Flask(__name__)
 
@@ -23,8 +24,13 @@ def webhook():
             
             print("Webhook received from GitHub - Push event:", ContainerName)
 
-            # Send git pull command to the container
-            os.system(f"docker exec {ContainerName} git pull")
+            cmd = f'docker inspect --format "{{.Config.Labels.program_path}}" {ContainerName}'
+            ResultPath = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            
+            # Do git pull from the ResultPath directory to update the program files
+            cmd = f'cd {ResultPath.stdout.strip()} && git pull'
+            ResultPull = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            print(ResultPull.stdout.strip())
             
             return "Success"
         else:
