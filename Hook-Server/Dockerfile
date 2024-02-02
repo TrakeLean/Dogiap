@@ -12,8 +12,8 @@ WORKDIR /app
 # Copy everything from the host to the container
 COPY . /app
 
-# Print the contents of the current directory for debugging
-RUN ls -la
+# Print the contents of the current directory for debugging and save to a file
+RUN ls -la > directory_contents.txt
 
 # Install dependencies (if needed)
 RUN pip install --no-cache-dir -r requirements.txt
