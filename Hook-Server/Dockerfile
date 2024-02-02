@@ -12,8 +12,11 @@ WORKDIR /app
 # Copy everything from the host to the container
 COPY . /app
 
+# Print the contents of the current directory for debugging
+RUN ls -la
+
 # Install dependencies (if needed)
-RUN pip install --no-cache-dir -r ./requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Expose port 5000
 EXPOSE 5000
