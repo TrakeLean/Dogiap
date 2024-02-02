@@ -23,8 +23,6 @@ function print_status() {
     else
         echo -e "\033[F\r> ${RED}$message${NC}                     "
     fi
-
-    sleep 0.25  # Adjust the sleep duration as needed
 }
 
 # Function to display usage information
@@ -40,6 +38,104 @@ usage() {
 version() {
     echo "dogiap version $VERSION"
     exit 0
+}
+
+configure_git_and_ssh() {
+# Check if SSH key exists
+    echo "> Checking if SSH key exists"
+    if [ ! -f ~/.ssh/id_rsa ]; then
+        echo "> No SSH key found."
+        while true; do
+            # Prompt user to generate SSH key
+            read -p "$(echo -e "${YELLOW}> Do you want to generate an SSH key? (y/n): ${NC}")" GenerateSsh
+
+            if [ "$(echo "$GenerateSsh" | tr '[:upper:]' '[:lower:]')" = "y" ]; then
+                # Prompt user to enter email address
+                read -p "$(echo -e "${YELLOW}> Enter your email address: ${NC}")" EmailAddress
+
+                # Generate SSH key
+                echo "> Generating SSH key"
+                ssh-keygen -t rsa -b 4096 -C "$EmailAddress"
+
+                # Display the SSH public key
+                echo "> Add the following SSH public key to your Git hosting service:"
+                echo ""
+                cat ~/.ssh/id_rsa.pub
+                echo ""
+
+                # Prompt user to add SSH key to GitHub
+                echo "> Press Enter after adding the SSH key to continue."
+                read -r
+                break
+            elif [ "$(echo "$GenerateSsh" | tr '[:upper:]' '[:lower:]')" = "n" ]; then
+                echo "> Skipping SSH key generation. This is needed to connect to GitHub, exiting."
+                exit 1
+            else
+                echo "> Invalid input. Please enter 'y' or 'n'."
+            fi
+        done
+    else
+        print_status "Checking if SSH key exists" "success"
+    fi
+
+    # Start the ssh-agent in the background
+    eval "$(ssh-agent -s)"  > /dev/null 2>&1
+
+    # Check if the SSH key is already added
+    if ! ssh-add -l | grep -q "$HOME/.ssh/id_rsa"; then
+        # If not added, add the SSH private key to the ssh-agent
+        ssh-add ~/.ssh/id_rsa > /dev/null 2>&1
+    fi
+
+    # Check if SSH key is associated with GitHub
+    echo "> Testing SSH key connection to GitHub"
+    if ssh -T git@github.com 2>&1 | grep -q "successfully authenticated"; then
+        print_status "Testing SSH key connection to GitHub" "success"
+    else
+        print_status "Testing SSH key connection to GitHub" "failure"
+        echo "> Please ensure that the SSH key is added to your GitHub account and try again."
+        exit 1
+    fi
+    
+    # Check if Git is available
+    echo "> Checking if Git is installed"
+    if ! command -v git &> /dev/null; then
+        while true; do
+            # Ask if the user wants to install Git
+            read -p "$(echo -e "${YELLOW}> Git is not installed. Do you want to install Git? (y/n): ${NC}")" InstallGit
+
+            if [ "$(echo "$InstallGit" | tr '[:upper:]' '[:lower:]')" = "y" ]; then
+                # Inform the user about the installation process
+                echo "> Installing Git"
+
+                # Check the Linux distribution and install Git accordingly
+                if [ -f /etc/redhat-release ]; then
+                    # For Red Hat-based systems (e.g., CentOS)
+                    sudo yum install -y git
+                elif [ -f /etc/debian_version ]; then
+                    # For Debian-based systems (e.g., Ubuntu)
+                    sudo apt-get update
+                    sudo apt-get install -y git
+                else
+                    # Unsupported Linux distribution
+                    echo -e "\r\033[K> Unsupported Linux distribution. Please install Git manually."
+                    exit 1
+                fi
+
+                # Display success message
+                print_status "Installing Git" "success"
+                break
+            elif [ "$(echo "$InstallGit" | tr '[:upper:]' '[:lower:]')" = "n" ]; then
+                # User chose not to install Git
+                echo "> Git is required for this script. Exiting."
+                exit 1
+            else
+                echo "> Invalid input. Please enter 'y' or 'n'."
+            fi
+        done
+    else
+        print_status "Checking if Git is installed" "success"
+    fi
 }
 
 # Function to set up the server
@@ -103,95 +199,8 @@ main() {
         done
     fi
 
-    # Check if SSH key exists
-    if [ ! -f ~/.ssh/id_rsa ]; then
-        echo "> No SSH key found."
-        while true; do
-            # Prompt user to generate SSH key
-            read -p "$(echo -e "${YELLOW}> Do you want to generate an SSH key? (y/n): ${NC}")" GenerateSsh
-
-            if [ "$(echo "$GenerateSsh" | tr '[:upper:]' '[:lower:]')" = "y" ]; then
-                # Prompt user to enter email address
-                read -p "$(echo -e "${YELLOW}> Enter your email address: ${NC}")" EmailAddress
-
-                # Generate SSH key
-                echo "> Generating SSH key"
-                ssh-keygen -t rsa -b 4096 -C "$EmailAddress"
-
-                # Display the SSH public key
-                echo "> Add the following SSH public key to your Git hosting service:"
-                echo ""
-                cat ~/.ssh/id_rsa.pub
-                echo ""
-
-                # Prompt user to add SSH key to GitHub
-                echo "> Press Enter after adding the SSH key to continue."
-                read -r
-                break
-            elif [ "$(echo "$GenerateSsh" | tr '[:upper:]' '[:lower:]')" = "n" ]; then
-                echo "> Skipping SSH key generation. This is needed to connect to GitHub, exiting."
-                exit 1
-            else
-                echo "> Invalid input. Please enter 'y' or 'n'."
-            fi
-        done
-    fi
-
-    # Start the ssh-agent in the background
-    eval "$(ssh-agent -s)"  > /dev/null 2>&1
-
-    # Check if the SSH key is already added
-    if ! ssh-add -l | grep -q "$HOME/.ssh/id_rsa"; then
-        # If not added, add the SSH private key to the ssh-agent
-        ssh-add ~/.ssh/id_rsa > /dev/null 2>&1
-    fi
-
-    # Check if SSH key is associated with GitHub
-    echo "> Testing SSH key connection to GitHub"
-    if ssh -T git@github.com 2>&1 | grep -q "successfully authenticated"; then
-        print_status "Testing SSH key connection to GitHub" "success"
-    else
-        print_status "Testing SSH key connection to GitHub" "failure"
-        echo "> Please ensure that the SSH key is added to your GitHub account and try again."
-        exit 1
-    fi
-    
-    # Check if Git is available
-    if ! command -v git &> /dev/null; then
-        while true; do
-            # Ask if the user wants to install Git
-            read -p "$(echo -e "${YELLOW}> Git is not installed. Do you want to install Git? (y/n): ${NC}")" InstallGit
-
-            if [ "$(echo "$InstallGit" | tr '[:upper:]' '[:lower:]')" = "y" ]; then
-                # Inform the user about the installation process
-                echo "> Installing Git"
-
-                # Check the Linux distribution and install Git accordingly
-                if [ -f /etc/redhat-release ]; then
-                    # For Red Hat-based systems (e.g., CentOS)
-                    sudo yum install -y git
-                elif [ -f /etc/debian_version ]; then
-                    # For Debian-based systems (e.g., Ubuntu)
-                    sudo apt-get update
-                    sudo apt-get install -y git
-                else
-                    # Unsupported Linux distribution
-                    echo -e "\r\033[K> Unsupported Linux distribution. Please install Git manually."
-                    exit 1
-                fi
-
-                # Display success message
-                print_status "Installing Git" "success"
-                break
-            elif [ "$(echo "$InstallGit" | tr '[:upper:]' '[:lower:]')" = "n" ]; then
-                # User chose not to install Git
-                echo "> Git is required for this script. Exiting."
-                exit 1
-            else
-                echo "> Invalid input. Please enter 'y' or 'n'."
-            fi
-        done
-    fi
+    # Check if the user has Git and SSH set up
+    configure_git_and_ssh
 
     echo "> Cloning Git repository from $SshUrl"
     # Clone the Git repository into the current directory
@@ -285,7 +294,7 @@ jobs:
 
       - name: Send POST request to restart  $RepoName
         run: |
-          curl_response=\$(curl -X POST "$WebHookServerUrl" -H "Content-Type: application/json" -H "X-GitHub-Event: push" --data '{"ContainerName": "$RepoName"}' --fail --silent --show-error)
+          curl_response=\$(curl -X POST "$WebHookServerUrl" -H "Content-Type: application/json" -H "X-GitHub-Event: push" --data '{"ContainerName": "$RepoName", "ProgramPath": "'$(pwd)'"}' --fail --silent --show-error)
 
           if [ \$? -ne 0 ]; then
             echo "> Failed to send webhook request"
@@ -296,46 +305,6 @@ jobs:
           exit 0
 EOL
         print_status "Creating GitHub Actions directory and file" "success"
-    fi
-
-    # Check if Docker is installed
-    if ! command -v docker &> /dev/null; then
-        while true; do
-            # Ask if the user wants to install Docker
-            read -p "$(echo -e "${YELLOW}> Docker is not installed. Do you want to install Docker? (y/n): ${NC}")" InstallDocker
-
-            if [ "$(echo "$InstallDocker" | tr '[:upper:]' '[:lower:]')" = "y" ]; then
-                # Inform the user about the installation process
-                echo "> Installing Docker"
-
-                # Check the Linux distribution and install Docker accordingly
-                if [ -f /etc/redhat-release ]; then
-                    # For Red Hat-based systems (e.g., CentOS)
-                    sudo yum install -y docker
-                elif [ -f /etc/debian_version ]; then
-                    # For Debian-based systems (e.g., Ubuntu)
-                    sudo apt-get update
-                    sudo apt-get install -y docker.io
-                else
-                    # Unsupported Linux distribution
-                    echo -e "> Unsupported Linux distribution. Please install Docker manually."
-                    exit 1
-                fi
-
-                # Start Docker service
-                sudo systemctl start docker
-
-                # Display success message
-                print_status "Installing Docker" "success"
-                break
-            elif [ "$(echo "$InstallDocker" | tr '[:upper:]' '[:lower:]')" = "n" ]; then
-                # User chose not to install Docker
-                echo "> Docker is required for this script. Exiting."
-                exit 1
-            else
-                echo "> Invalid input. Please enter 'y' or 'n'."
-            fi
-        done
     fi
 
     # Setup variables for Docker file
@@ -349,11 +318,8 @@ FROM python:3.9
 
 # Install Git, SSH and other dependencies
 RUN apt-get update && \
-    apt-get install -y \
-        git \
-
-# Custom label for metadata
-LABEL program_path=$PWD
+    apt-get install -y git && \
+    rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /app

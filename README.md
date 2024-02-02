@@ -33,9 +33,14 @@ sudo rm ~/Dogiap.deb && sudo apt-get remove -y dogiap && dpkg-deb --build Dogiap
 #
 docker inspect --format '{{.Config.Labels.program_path}}' twitchbot
 
+#
+Stop, pull from path, Start from path
 
 # Test
-dogiap git@github.com:TrakeLean/Dogiap.git
+dogiap git@github.com:TrakeLean/twitchbot.git
+
+#
+sudo rm -r twitch/ ; mkdir twitch ; cd twitch
 
 - Validates the provided GitHub repository link.
 - Generates an SSH key, if required, for authenticating with GitHub.
