@@ -19,7 +19,9 @@ usage() {
     echo -e "Options:"
     echo -e "  --setup\tSet up server for webhook requests"
     echo -e "  --start\tStart the server"
+    echo -e "  --check\tCheck if the server is running"
     echo -e "  --v\t\tDisplay version information"
+    echo -e "  --help\tDisplay usage information"
     exit 1
 }
 
@@ -38,6 +40,24 @@ function print_status() {
         echo -e "\033[F\r> ${GREEN}$message${NC}                                   "
     else
         echo -e "\033[F\r> ${RED}$message${NC}                                   "
+    fi
+}
+
+function check() {
+    echo "> Checking if the server is running"
+    # Check if the Docker container already exists
+    if docker ps -a --format '{{.Names}}' | grep -q "^hook-server"; then
+        print_status "Yup, the server is running" "success"
+        exit 0
+    else
+        print_status "Nop, the erver is not running" "failure"
+        read -p "$(echo -e "${YELLOW}> Do you want to start the server? (y/n): ${NC}")" choice
+        if [ "$(echo "$choice" | tr '[:upper:]' '[:lower:]')" = "y" ]; then
+            server_start
+        else
+            exit 1
+        fi
+        exit 1
     fi
 }
 
@@ -684,6 +704,9 @@ while [ "$#" -gt 0 ]; do
             ;;
         --start)
             server_start
+            ;;
+        --check)
+            check
             ;;
         --help)
             usage
