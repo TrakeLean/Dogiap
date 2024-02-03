@@ -1,92 +1,91 @@
-# GitHub Automated Puller
+## Dogiap - Automatic GitHub Repository Puller
 
-The GitHub Automated Puller is a bash script (`AutoSetup.sh`) that streamlines the setting up of a GitHub repository for automated pulling within a Docker container. This utility is perfect for those who want to automate the deployment of their code updates without manual intervention.
+![GitHub last commit](https://img.shields.io/github/last-commit/TrakeLean/Dogiap)
+![GitHub contributors](https://img.shields.io/github/contributors/TrakeLean/Dogiap)
+![GitHub top language](https://img.shields.io/github/languages/top/TrakeLean/Dogiap)
+![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/TrakeLean/Dogiap)
+![GitHub stars](https://img.shields.io/github/stars/TrakeLean/Dogiap?style=social)
+![GitHub forks](https://img.shields.io/github/forks/TrakeLean/Dogiap?style=social)
+![GitHub watchers](https://img.shields.io/github/watchers/TrakeLean/Dogiap?style=social)
 
-## Features
 
+Dogiap is an automated script that simplifies the process of setting up continuous deployment for your GitHub repositories. With Dogiap, you can set up your server so that once you push changes to your GitHub repository, it will automatically pull updates and redeploy your project.
 
+### Features
 
-sudo rm -r Dogiap.deb 
-sudo apt-get remove -y dogiap
-dpkg-deb --build Dogiap
-sudo apt-get install -f ~/Dogiap.deb
-which dogiap
+- Clone and set up a project from a GitHub repository
+- Automatically pull updates from GitHub when changes are pushed
+- Easy to install and use on your server
 
-# Remove the .deb file
-sudo rm ~/Dogiap.deb
+### Prerequisites
 
-# apt remove dogiap
-sudo apt-get remove -y dogiap
+- Linux server with internet access
 
-# Build the Debian package
-dpkg-deb --build Dogiap
+### Installation
 
-# Install the Debian package
-sudo dpkg -i ~/Dogiap.deb
+Before using the script, Dogiap must be installed on your system. It can be installed using the `apt` package manager:
 
-# If needed, fix dependencies
-sudo apt-get install -f
-
-#
-sudo rm ~/Dogiap.deb && sudo apt-get remove -y dogiap && dpkg-deb --build Dogiap && sudo dpkg -i ~/Dogiap.deb
-
-#
-docker inspect --format '{{.Config.Labels.program_path}}' twitchbot
-
-#
-Stop, pull from path, Start from path
-
-# Test
-dogiap git@github.com:TrakeLean/twitchbot.git
-
-#
-sudo rm -r twitch/ ; mkdir twitch ; cd twitch
-
-- Validates the provided GitHub repository link.
-- Generates an SSH key, if required, for authenticating with GitHub.
-- Updates the remote repository URL to use SSH instead of HTTPS.
-- Checks for the installation of essential tools such as Docker, Git, and SSH, and offers installation if any of them is not found.
-- Creates a Dockerfile if it doesn't exist and builds a Docker image from it.
-- Runs the Docker image as a container.
-- Adds and commits changes to the git repository and pushes them to GitHub.
-
-## Usage
-
-To use this script, ensure you have execution permissions. If needed, you can give the script execution permissions by running the command:
-
-```sh
-chmod +x AutoSetup.sh
+```bash
+sudo apt install dogiap
 ```
 
-Now you can run the script by providing your GitHub repository link as follows:
+### Usage
 
-```sh
-./AutoSetup.sh <GitHub repository link>
+To get started with Dogiap, you'll first need to set up your server to handle webhook requests. This is achieved by using the `--setup` flag.
+
+Run the following command to set up Dogiap on your server:
+
+```bash
+dogiap --setup
 ```
 
-The script will guide you through a series of steps, including SSH key generation, updating the remote URL, checking Docker installation, building and running a Docker image, and updating the GitHub repository.
+Once the setup is complete, you can start deploying your GitHub repository by simply passing the repository URL to Dogiap:
 
-## Step-by-step Guide
+```bash
+dogiap <GitHub repository link>
+```
 
-Here's what `AutoSetup.sh` will do:
+### Commands
 
-1. **Repository Link Validation:** At the start, the script will check if you've provided a valid GitHub repository link. It will accept both SSH and HTTPS formats.
+- `dogiap <GitHub repository link>`: Initialize and set up the repository for automatic pulling.
+- `dogiap --setup`: Set up the server for webhook requests. (will also start the server)
+- `dogiap --start`: Start the webhook server. (if it ever shuts down)
+- `dogiap --version` or `dogiap --v`: Display version information.
 
-2. **SSH Key Generation:** If no SSH key is present, it will prompt you to generate one, facilitate its creation, and instruct you to add it to your GitHub account.
+### Examples
 
-3. **SSH Key Connection Testing:** It will test the SSH connection to GitHub to ensure that the key has been correctly added to your account.
+Setting up the server:
 
-4. **Remote URL Update:** The script will automatically update the repository remote URL to use SSH.
+```bash
+dogiap --setup
+```
 
-5. **Environment Setup:** The script checks for the presence of essential tools such as Git, Docker, and SSH. If any of these tools are not installed, the script will prompt the user to install them. Once Docker, Git, and SSH are set up, the script further checks for the existence of a `Dockerfile` and creates one if needed.
+Cloning and setting up a repository:
 
+```bash
+dogiap git@github.com:TrakeLean/Dogiap.git
+```
 
-6. **Building and Running Docker Image:** With the Dockerfile in place, the script builds a new Docker image with your repository name, and runs it as a container.
+Starting the webhook server:
 
-7. **Git Workflow:** Finally, it will add all project files to git, commit them with a predefined message, and push the changes to the remote repository.
+```bash
+dogiap --start
+```
 
-## Conclusion
+### How It Works
 
-The `AutoSetup.sh` script will help you automate the setup of a GitHub repository for your projects. By following the outlined steps, you can create a seamless workflow for deploying updates directly within a Docker container.
+Upon initialization, Dogiap checks if the current directory is empty and sets up necessary permissions. After confirming the installation of Git, SSH, Docker, and determining the installation paths, it proceeds to configure SSH keys, ensuring a secure connection to GitHub.
 
-Remember to always review and test bash scripts before running them in your environment to ensure they perform as expected and comply with your project requirements.
+Dogiap clones the specified repository and creates a Dockerfile and GitHub Actions workflow designed to handle automatic pulling of updates. The workflow includes a webhook that triggers a POST request to a server, notifying it about the pushed changes and effectively restarting the associated Docker container to reflect updates.
+
+### Contributions
+
+Contributions to this project are welcome. Please visit the repository at https://github.com/TrakeLean/Dogiap.git to report issues or submit pull requests.
+
+### License
+
+This project is open-sourced under the [GNU General Public License v3.0](LICENSE.md).
+
+---
+
+Enjoy using Dogiap for effortless and automated deployments on your server!
