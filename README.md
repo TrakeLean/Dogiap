@@ -1,13 +1,10 @@
 ## Dogiap - Automatic GitHub Repository Puller
 
-![GitHub last commit](https://img.shields.io/github/last-commit/TrakeLean/Dogiap)
 ![GitHub contributors](https://img.shields.io/github/contributors/TrakeLean/Dogiap)
-![GitHub top language](https://img.shields.io/github/languages/top/TrakeLean/Dogiap)
 ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/TrakeLean/Dogiap)
 ![GitHub stars](https://img.shields.io/github/stars/TrakeLean/Dogiap?style=social)
 ![GitHub forks](https://img.shields.io/github/forks/TrakeLean/Dogiap?style=social)
 ![GitHub watchers](https://img.shields.io/github/watchers/TrakeLean/Dogiap?style=social)
-
 
 Dogiap is an automated script that simplifies the process of setting up continuous deployment for your GitHub repositories. With Dogiap, you can set up your server so that once you push changes to your GitHub repository, it will automatically pull updates and redeploy your project.
 
