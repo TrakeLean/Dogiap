@@ -12,7 +12,7 @@ function print_status() {
     fi
 }
 
-configure_git_and_ssh() {
+function configure_git_and_ssh() {
 # Check if SSH key exists
     echo "> Checking if SSH key exists"
     if [ ! -f ~/.ssh/id_rsa ]; then
@@ -173,8 +173,7 @@ configure_git_and_ssh() {
 
 function server() {
     DirectoryPath="/srv/DogiapHookServer"
-    DockerfilePath="$DirectoryPath/Hook-Server"
-
+    DockerfilePath="/srv/DogiapHookServer/Hook-Server"
     DockerName="hook-server"
 
     # ANSI color codes
@@ -256,9 +255,6 @@ function server() {
         exit 1
     fi
 
-    # Move into the 'Hook-Server' directory
-    cd "$DockerfilePath" || exit
-
     # Check if the Docker container already exists
     if docker ps -a --format '{{.Names}}' | grep -q "^$DockerName"; then
         # Prompt user for action
@@ -275,7 +271,7 @@ function server() {
 
                     # Build and run the Docker image
                     echo "> Building Docker image \"$DockerName\""
-                    # docker build -t $DockerName -f "$DockerfilePath" "$DirectoryPath/Hook-Server" > /dev/null 2>&1
+                    docker build -t $DockerName -f $DockerfilePath/Dockerfile $DirectoryPath
                     build_status=$?
                     if [ $build_status -eq 0 ]; then
                         print_status "Building Docker image \"$DockerName\"" "success"
@@ -308,9 +304,8 @@ function server() {
     else
         # Build and run the Docker image
         echo "> Building Docker image \"$DockerName\""
-        # docker build -t $DockerName -f $DockerfilePath $DirectoryPath
- 
-        docker build -t $DockerName -f $DockerfilePath $DirectoryPath
+
+        docker build -t $DockerName -f $DockerfilePath/Dockerfile $DirectoryPath
 
         if [ $build_status -eq 0 ]; then 
             print_status "Building Docker image \"$DockerName\"" "success"
