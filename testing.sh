@@ -271,7 +271,8 @@ function server() {
 
                     # Build and run the Docker image
                     echo "> Building Docker image \"$DockerName\""
-                    docker build -t $DockerName -f $DockerfilePath/Dockerfile $DirectoryPath
+                    docker build -t $DockerName -f $DockerfilePath/Dockerfile $DockerfilePath
+                    
                     build_status=$?
                     if [ $build_status -eq 0 ]; then
                         print_status "Building Docker image \"$DockerName\"" "success"
@@ -305,8 +306,8 @@ function server() {
         # Build and run the Docker image
         echo "> Building Docker image \"$DockerName\""
 
-        docker build -t $DockerName -f $DockerfilePath/Dockerfile $DirectoryPath
-
+        docker build -t $DockerName -f $DockerfilePath/Dockerfile $DockerfilePath
+        build_status=$?
         if [ $build_status -eq 0 ]; then 
             print_status "Building Docker image \"$DockerName\"" "success"
             echo "> Running Docker image \"$DockerName\""

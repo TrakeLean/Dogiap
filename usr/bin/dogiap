@@ -13,23 +13,12 @@ NC='\033[0m' # No Color
 WorkflowFilePath="./.github/workflows/automatic-pull.yml"
 WebHookServerUrl="129.242.219.112:5000/git-webhook"
 
-# Print status message to the terminal
-function print_status() {
-    local message="$1"
-    local result="$2"
-
-    if [ "$result" == "success" ]; then
-        echo -e "\033[F\r> ${GREEN}$message${NC}                   "
-    else
-        echo -e "\033[F\r> ${RED}$message${NC}                     "
-    fi
-}
-
 # Function to display usage information
 usage() {
     echo -e "Usage: dogiap <GitHub repository link>"
     echo -e "Options:"
-    echo -e "  --setup\tSet up server for webhook requests (place in its own folder)"
+    echo -e "  --setup\tSet up server for webhook requests"
+    echo -e "  --start\tStart the server"
     echo -e "  --v\t\tDisplay version information"
     exit 1
 }
@@ -40,8 +29,81 @@ version() {
     exit 0
 }
 
-configure_git_and_ssh() {
-# Check if SSH key exists
+# Print status message to the terminal
+function print_status() {
+    local message="$1"
+    local result="$2"
+
+    if [ "$result" == "success" ]; then
+        echo -e "\033[F\r> ${GREEN}$message${NC}                                   "
+    else
+        echo -e "\033[F\r> ${RED}$message${NC}                                   "
+    fi
+}
+
+function start() {
+    echo "> Starting the server"
+    # Check if the Docker container already exists
+    if docker ps -a --format '{{.Names}}' | grep -q "^hook-server"; then
+        docker start hook-server > /dev/null 2>&1
+        start_status=$?
+        if [ $start_status -eq 0 ]; then
+            print_status "Starting the server" "success"
+        else
+            print_status "Starting the server" "failure"
+            exit 1
+        fi
+        exit 0  # Terminate the script successfully
+    else
+        print_status "Starting the server" "failure"
+        read -p "$(echo -e "${YELLOW}> Server not found. Do you want to set up the server? (y/n): ${NC}")" choice
+        if [ "$(echo "$choice" | tr '[:upper:]' '[:lower:]')" = "y" ]; then
+            server_setup
+        else
+            exit 1
+        fi
+    fi
+}
+
+function configure_git_and_ssh() {
+    # Check if SSH is available
+    if ! command -v ssh &> /dev/null; then
+        while true; do
+            # Ask if the user wants to install SSH
+            read -p "$(echo -e "${YELLOW}> SSH is not installed. Do you want to install SSH? (y/n): ${NC}")" InstallSSH
+
+            if [ "$(echo "$InstallSSH" | tr '[:upper:]' '[:lower:]')" = "y" ]; then
+                # Inform the user about the installation process
+                echo "> Installing SSH"
+
+                # Check the Linux distribution and install SSH accordingly
+                if [ -f /etc/redhat-release ]; then
+                    # For Red Hat-based systems (e.g., CentOS)
+                    sudo yum install -y openssh
+                elif [ -f /etc/debian_version ]; then
+                    # For Debian-based systems (e.g., Ubuntu)
+                    sudo apt-get update
+                    sudo apt-get install -y openssh-client
+                else
+                    # Unsupported Linux distribution
+                    echo -e "> Unsupported Linux distribution. Please install SSH manually."
+                    exit 1
+                fi
+
+                # Display success message
+                print_status "Installing SSH" "success"
+                break
+            elif [ "$(echo "$InstallSSH" | tr '[:upper:]' '[:lower:]')" = "n" ]; then
+                # User chose not to install SSH
+                echo "> SSH is required for this script. Exiting."
+                exit 1
+            else
+                echo "> Invalid input. Please enter 'y' or 'n'."
+            fi
+        done
+    fi
+
+    # Check if SSH key exists
     echo "> Checking if SSH key exists"
     if [ ! -f ~/.ssh/id_rsa ]; then
         echo "> No SSH key found."
@@ -100,6 +162,7 @@ configure_git_and_ssh() {
     # Check if Git is available
     echo "> Checking if Git is installed"
     if ! command -v git &> /dev/null; then
+        print_status "Checking if Git is installed" "failure"
         while true; do
             # Ask if the user wants to install Git
             read -p "$(echo -e "${YELLOW}> Git is not installed. Do you want to install Git? (y/n): ${NC}")" InstallGit
@@ -136,17 +199,217 @@ configure_git_and_ssh() {
     else
         print_status "Checking if Git is installed" "success"
     fi
+
+    # Check if Docker is installed
+    echo "> Checking if Docker is installed"
+    if ! command -v docker &> /dev/null; then
+        print_status "Checking if Docker is installed" "failure"
+        while true; do
+            # Ask if the user wants to install Docker
+            read -p "$(echo -e "${YELLOW}> Docker is not installed. Do you want to install Docker? (y/n): ${NC}")" InstallDocker
+
+            if [ "$(echo "$InstallDocker" | tr '[:upper:]' '[:lower:]')" = "y" ]; then
+                # Inform the user about the installation process
+                echo "> Installing Docker"
+
+                # Check the Linux distribution and install Docker
+                if [ -f /etc/redhat-release ]; then
+                    # For Red Hat-based systems (e.g., CentOS)
+                    sudo yum install -y docker
+                elif [ -f /etc/debian_version ]; then
+                    # For Debian-based systems (e.g., Ubuntu)
+                    sudo apt-get update
+                    sudo apt-get install -y docker.io
+                else
+                    # Unsupported Linux distribution
+                    echo -e "> Unsupported Linux distribution. Please install Docker manually."
+                    exit 1
+                fi
+
+                # Start Docker service
+                sudo systemctl start docker
+
+                # Display success message
+                print_status "Installing Docker" "success"
+                break
+            elif [ "$(echo "$InstallDocker" | tr '[:upper:]' '[:lower:]')" = "n" ]; then
+                # User chose not to install Docker
+                echo "> Docker is required for this script. Exiting."
+                exit 1
+            else
+                echo "> Invalid input. Please enter 'y' or 'n'."
+            fi
+        done
+    else
+        print_status "Checking if Docker is installed" "success"
+    fi
+
+    # Check if GitHub is already in known hosts
+    echo "> Checking if GitHub is already in the known hosts"
+    if grep -q "github.com" ~/.ssh/known_hosts; then
+        print_status "Checking if GitHub is already in the known hosts" "success"
+    else
+        # Add GitHub to known hosts
+        print_status "Checking if GitHub is already in the known hosts" "failure"
+        echo "> Adding GitHub to known hosts"
+        if ssh-keyscan github.com >> ~/.ssh/known_hosts; then
+            print_status "Adding GitHub to known hosts" "success"
+        else
+            print_status "Adding GitHub to known hosts" "failure"
+            exit 1
+        fi
+    fi
 }
 
-# Function to set up the server
-server() {
-    echo "> Work in progress: Setting up the server"
-    # Add your server setup logic here
-    echo "> Server setup logic will be implemented in future releases."
-    exit 1
+function server_setup() {
+    DirectoryPath="/srv/DogiapHookServer"
+    DockerfilePath="/srv/DogiapHookServer/Hook-Server"
+    DockerName="hook-server"
+    
+    configure_git_and_ssh
+
+    # Check if directory exists
+    echo "> Checking if directory exists"
+    if [ -d "$DirectoryPath" ]; then
+        print_status "Directory already exists" "success"
+        while true; do
+            read -p "$(echo -e "${YELLOW}> Directory already exists. Do you want to delete it? (y/n): ${NC}")" choice
+
+            if [ "$(echo "$choice" | tr '[:upper:]' '[:lower:]')" = "y" ]; then
+                sudo rm -r "$DirectoryPath"  # Delete existing directory
+                sudo mkdir "$DirectoryPath"   # Create a new directory
+                # Check if the directory was created successfully
+                echo " "
+                if [ $? -eq 0 ]; then
+                    print_status "Directory '$DirectoryPath' created" "success"
+                else
+                    print_status "Failed to create the '$DirectoryPath' Exiting." "failed"
+                    exit 1
+                fi
+                break
+            elif [ "$(echo "$choice" | tr '[:upper:]' '[:lower:]')" = "n" ]; then
+                exit 1
+                break
+            else
+                echo -e "${YELLOW}> Invalid input"
+            fi
+        done
+    else
+        sudo mkdir "$DirectoryPath"
+        print_status "Directory created" "success"
+    fi
+
+    sudo chown -R "$(whoami)" "$DirectoryPath"
+
+    # Change into the directory
+    cd $DirectoryPath || exit
+
+    echo "> Initializing an empty Git repository"
+    # Initialize an empty Git repository
+    git init --quiet
+
+    # Check if Git repository initialization was successful
+    if [ $? -eq 0 ]; then
+        print_status "Initializing an empty Git repository" "success"
+    else
+        print_status "Initializing an empty Git repository" "failed"
+        exit 1
+    fi
+
+    # Attempt to add the remote origin without displaying output
+    echo "> Adding remote 'origin'"
+    git remote add -f origin https://github.com/TrakeLean/Dogiap > /dev/null 2>&1
+    # Check if the remote was added successfully
+    if [ $? -eq 0 ]; then
+        print_status "Adding remote 'origin'" "success"
+    else
+        print_status "Adding remote 'origin'" "failed"
+        exit 1
+    fi
+
+    git config core.sparseCheckout true
+    echo "Hook-Server/*" >> .git/info/sparse-checkout
+
+    # Pull changes from the remote repository
+    echo "> Fetching the contents of 'Hook-Server' folder"
+    if git pull --quiet origin main; then
+        print_status "Fetching the contents of 'Hook-Server' folder" "success"
+    else
+        print_status "Fetching the contents of 'Hook-Server' folder" "failed"
+        exit 1
+    fi
+
+    # Check if the Docker container already exists
+    if docker ps -a --format '{{.Names}}' | grep -q "^$DockerName"; then
+        # Prompt user for action
+        while true; do
+            read -p "$(echo -e "${YELLOW}> Container \"$DockerName\" already exists. Do you want to rebuild? (y/n): ${NC}")" choice
+
+            if [ "$(echo "$choice" | tr '[:upper:]' '[:lower:]')" = "y" ]; then
+                echo "> Deleting existing Docker container \"$DockerName\""
+                docker stop "$DockerName" > /dev/null 2>&1
+                docker rm "$DockerName" > /dev/null 2>&1
+                delete_status=$?
+                if [ $delete_status -eq 0 ]; then
+                    print_status "Deleting existing Docker container \"$DockerName\"" "success"
+
+                    # Build and run the Docker image
+                    echo "> Building Docker image \"$DockerName\""
+                    docker build -t $DockerName -f $DockerfilePath/Dockerfile $DockerfilePath > /dev/null 2>&1
+                    
+                    build_status=$?
+                    if [ $build_status -eq 0 ]; then
+                        print_status "Building Docker image \"$DockerName\"" "success"
+                        echo "> Running Docker image \"$DockerName\""
+                        docker run -d -p 5000:5000 --name $DockerName $DockerName > /dev/null 2>&1
+
+                        run_status=$?
+                        if [ $run_status -eq 0 ]; then
+                            print_status "Running Docker image \"$DockerName\"" "success"
+                            break
+                        else
+                            print_status "Running Docker image \"$DockerName\"" "failure"
+                            exit 1
+                        fi
+                    else
+                        print_status "Building Docker image \"$DockerName\"" "failure"
+                        exit 1
+                    fi
+                else
+                    print_status "Deleting existing Docker container \"$DockerName\"" "failure"
+                    exit 1
+                fi
+            elif [ "$(echo "$choice" | tr '[:upper:]' '[:lower:]')" = "n" ]; then
+                echo "> Skipping deletion of existing Docker container \"$DockerName\""
+                break
+            else
+                echo "> Invalid input. Please enter 'y' or 'n'."
+            fi
+        done
+    else
+        # Build and run the Docker image
+        echo "> Building Docker image \"$DockerName\""
+
+        docker build -t $DockerName -f $DockerfilePath/Dockerfile $DockerfilePath > /dev/null 2>&1
+        build_status=$?
+        if [ $build_status -eq 0 ]; then 
+            print_status "Building Docker image \"$DockerName\"" "success"
+            echo "> Running Docker image \"$DockerName\""
+            docker run -d -p 5000:5000 --name $DockerName $DockerName > /dev/null 2>&1
+            run_status=$?
+            if [ $run_status -eq 0 ]; then
+                print_status "Running Docker image \"$DockerName\"" "success"
+            else
+                print_status "Running Docker image \"$DockerName\"" "failure"
+                exit 1
+            fi
+        else
+            print_status "Building Docker image \"$DockerName\"" "failure"
+            exit 1
+        fi
+    fi
 }
 
-# Function to set up EVERYTHING!
 main() {
     # Check if the current directory is empty
     if [ ! -z "$(ls -A)" ]; then
@@ -161,43 +424,6 @@ main() {
     # Use chown to give the current user ownership of the current directory and its contents
     chown -R "$USER" "." > /dev/null 2>&1
     print_status "Setting up permissions" "success"
-
-    # Check if SSH is available
-    if ! command -v ssh &> /dev/null; then
-        while true; do
-            # Ask if the user wants to install SSH
-            read -p "$(echo -e "${YELLOW}> SSH is not installed. Do you want to install SSH? (y/n): ${NC}")" InstallSSH
-
-            if [ "$(echo "$InstallSSH" | tr '[:upper:]' '[:lower:]')" = "y" ]; then
-                # Inform the user about the installation process
-                echo "> Installing SSH"
-
-                # Check the Linux distribution and install SSH accordingly
-                if [ -f /etc/redhat-release ]; then
-                    # For Red Hat-based systems (e.g., CentOS)
-                    sudo yum install -y openssh
-                elif [ -f /etc/debian_version ]; then
-                    # For Debian-based systems (e.g., Ubuntu)
-                    sudo apt-get update
-                    sudo apt-get install -y openssh-client
-                else
-                    # Unsupported Linux distribution
-                    echo -e "> Unsupported Linux distribution. Please install SSH manually."
-                    exit 1
-                fi
-
-                # Display success message
-                print_status "Installing SSH" "success"
-                break
-            elif [ "$(echo "$InstallSSH" | tr '[:upper:]' '[:lower:]')" = "n" ]; then
-                # User chose not to install SSH
-                echo "> SSH is required for this script. Exiting."
-                exit 1
-            else
-                echo "> Invalid input. Please enter 'y' or 'n'."
-            fi
-        done
-    fi
 
     # Check if the user has Git and SSH set up
     configure_git_and_ssh
@@ -454,7 +680,16 @@ while [ "$#" -gt 0 ]; do
     SshUrl="$1"
     case "$1" in
         --setup)
-            server
+            server_setup
+            ;;
+        --start)
+            server_start
+            ;;
+        --help)
+            usage
+            ;;
+        --version)
+            version
             ;;
         --v)
             version
