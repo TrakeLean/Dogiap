@@ -12,11 +12,6 @@ WORKDIR /app
 # Copy everything from the host to the container
 COPY . /app/
 
-# Debugging output
-RUN ls -l /app/
-
-RUN echo "Hello World"
-
 # Display the contents of the current working directory
 RUN pwd && ls -l
 
