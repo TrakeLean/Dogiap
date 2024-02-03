@@ -2,6 +2,7 @@
 
 ![GitHub contributors](https://img.shields.io/github/contributors/TrakeLean/Dogiap)
 ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/TrakeLean/Dogiap)
+[![wakatime](https://wakatime.com/badge/user/25484680-9f95-4670-92ea-9abd3854b948/project/018d5bd0-3d8f-4db9-af17-62073ca412b0.svg)](https://wakatime.com/badge/user/25484680-9f95-4670-92ea-9abd3854b948/project/018d5bd0-3d8f-4db9-af17-62073ca412b0)
 ![GitHub stars](https://img.shields.io/github/stars/TrakeLean/Dogiap?style=social)
 ![GitHub forks](https://img.shields.io/github/forks/TrakeLean/Dogiap?style=social)
 ![GitHub watchers](https://img.shields.io/github/watchers/TrakeLean/Dogiap?style=social)
