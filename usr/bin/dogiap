@@ -50,10 +50,10 @@ function check() {
         print_status "Yup, the server is running" "success"
         exit 0
     else
-        print_status "Nop, the erver is not running" "failure"
+        print_status "Nop, the server is not running" "failure"
         read -p "$(echo -e "${YELLOW}> Do you want to start the server? (y/n): ${NC}")" choice
         if [ "$(echo "$choice" | tr '[:upper:]' '[:lower:]')" = "y" ]; then
-            server_start
+            start
         else
             exit 1
         fi
@@ -703,7 +703,7 @@ while [ "$#" -gt 0 ]; do
             server_setup
             ;;
         --start)
-            server_start
+            start
             ;;
         --check)
             check
