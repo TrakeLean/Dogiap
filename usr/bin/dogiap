@@ -140,6 +140,27 @@ function check() {
     fi
 }
 
+# Function to print out the logs for the service
+function print_service_logs() {
+    local SERVICE_FILE="$SERVICE_PATH/dogiap-$RepoName.service"
+
+    # Check if the service file exists
+    if [ ! -f "$SERVICE_FILE" ]; then
+        echo -e "${RED}Error:${NC} Service file '${SERVICE_FILE}' not found."
+        exit 1
+    fi
+
+    # Check if the service is already active
+    if sudo systemctl is-active --quiet "$RepoName"; then
+        echo -e "${GREEN}Logs for service '${RepoName}':${NC}"
+        sudo journalctl -u "$RepoName"
+        exit 0
+    else
+        echo -e "${YELLOW}Warning:${NC} Service '${RepoName}' is not running."
+        exit 1
+    fi
+}
+
 function start() {
     echo "> Starting $RepoName"
     # Specify the path to the Systemd service file
@@ -209,7 +230,6 @@ function server_setup() {
     fi
 
     sudo chown -R $(whoami) $DirectoryPath
-    echo "> CD into $DirectoryPath and initialize an empty Git repository"
     # Change into the directory and initialize an empty Git repository
     (cd "$DirectoryPath" &&
         echo "> Initializing an empty Git repository"
@@ -733,13 +753,16 @@ while [ "$#" -gt 0 ]; do
         --list)
             list_all_services
             ;;
-        --help)
+        --log)
+            print_service_logs
+            ;;
+        --help|--h)
             usage
             ;;
         --version|--v)
             version
             ;;
-        --delete)
+        --delete|--d|--remove|--r)
             shift
             RepoName="$1"
             delete_systemd_service
