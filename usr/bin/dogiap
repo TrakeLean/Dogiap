@@ -157,7 +157,7 @@ function print_service_logs() {
     # Check if the service is already active
     if sudo systemctl is-active --quiet "dogiap-$RepoName"; then
         echo -e "${GREEN}Logs for service '${RepoName}':${NC}"
-        sudo journalctl -u "dogiap-$RepoName" -n 15
+        sudo journalctl -u "dogiap-$RepoName" -n 20
         exit 0
     else
         echo -e "${YELLOW}Warning:${NC} Service '${RepoName}' is not running."
