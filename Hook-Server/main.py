@@ -40,7 +40,6 @@ def webhook():
             pull_cmd = f'cd {ProgramPath} && git pull'
             restart_cmd = f'systemctl restart dogiap-{ContainerName}'
             
-            logger.error(f"Error pulling changes: {pull_cmd.stderr}")
             return jsonify({"error": "Internal Server Error"}), 200
         
         #     # Pull changes from the Git repository
