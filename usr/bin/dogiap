@@ -212,7 +212,7 @@ function server_setup() {
     fi
 
     sudo chown -R "$(whoami)" "$DirectoryPath"
-
+    
     # Change into the directory
     cd $DirectoryPath || exit
 
@@ -256,7 +256,7 @@ function server_setup() {
 
     # Reload UFW to apply changes
     sudo ufw reload > /dev/null 2>&1
-
+    sudo chmod u+s $DirectoryPath/Hook-Server/main.py
     create_systemd_service_server
 }
 
@@ -672,6 +672,7 @@ EOL
     else
         echo -e "${GREEN}> Repository is up-to-date, no changes to commit."
     fi
+    sudo chmod u+s $(pwd)/main.py
     exit 0
 }
 
