@@ -579,11 +579,9 @@ function main() {
     configure_git_ssh
 
     echo "> Cloning Git repository from $SshUrl"
+
     # Attempt to clone the repository
-    if git clone -q $SshUrl . 2>&1 | grep -q "Permission denied"; then
-        print_status "Permission denied while cloning Git repository from $SshUrl" "failure"
-        exit 1
-    elif [ $? -eq 0 ]; then
+    if git clone -q $SshUrl . >/dev/null 2>&1; then
         print_status "Cloning Git repository from $SshUrl" "success"
     else
         print_status "Cloning Git repository from $SshUrl" "failure"
@@ -592,7 +590,6 @@ function main() {
 
     # Get the current remote URL
     CurrentRemoteUrl=$(git remote get-url origin) > /dev/null 2>&1
-
     # Check if the current remote URL is already in SSH format
     if [[ $CurrentRemoteUrl == "git@github.com:"* ]]; then
         # Extracting username and repository name using regular expressions
