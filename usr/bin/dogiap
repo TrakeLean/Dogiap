@@ -1,13 +1,14 @@
 #!/bin/bash
 
 # Define the version
-VERSION="1.0.5"
+VERSION="1.0.6"
 ssh_pattern="git@github\.com:.+/.+\.git"
 https_pattern="https://github\.com/.+/.+\.git"
 # ANSI color codes
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 YELLOW='\033[1;33m'
+CYAN='\033[1;36m'
 NC='\033[0m' # No Color
 # Setup variables for GitHub Actions workflow file and service file
 WorkflowFilePath="./.github/workflows/automatic-pull.yml"
@@ -16,17 +17,19 @@ SERVICE_PATH="/etc/systemd/system"
 
 # Function to display usage information
 function usage() {
-    echo -e "Usage: dogiap <GitHub repository link>"
-    echo -e "Options:"
-    echo -e "  --setup\tSet up server for webhook requests"
-    echo -e "  --start\tStart the server"
-    echo -e "  --check\tCheck if the server is running"
-    echo -e "  --list\tList all services"
-    echo -e "  --delete\tDelete the service"
-    echo -e "  --version\tDisplay version information"
-    echo -e "  --help\tDisplay usage information"
+    echo -e "${CYAN}Usage:${NC} dogiap <GitHub repository link>"
+    echo -e "${CYAN}Options:${NC}"
+    echo -e "  ${YELLOW}--setup${NC}\tSet up server for webhook requests"
+    echo -e "  ${YELLOW}--start${NC}\tStart the server"
+    echo -e "  ${YELLOW}--check${NC}\tCheck if the server is running"
+    echo -e "  ${YELLOW}--list${NC}\t\tList all services"
+    echo -e "  ${YELLOW}--log${NC}\t\tPrint out the logs for the service"
+    echo -e "  ${YELLOW}--delete${NC}\tDelete the service"
+    echo -e "  ${YELLOW}--version${NC}\tDisplay version information"
+    echo -e "  ${YELLOW}--help${NC}\t\tDisplay this usage information"
     exit 1
 }
+
 
 # Function to display version information
 function version() {
@@ -84,6 +87,7 @@ function list_all_services() {
             fi
         done
     fi
+    echo ""
 }
 
 # Common function to check service file existence and prompt for setup
@@ -756,13 +760,13 @@ while [ "$#" -gt 0 ]; do
         --log)
             print_service_logs
             ;;
-        --help|--h)
+        --help | -h)
             usage
             ;;
-        --version|--v)
+        --version | -v)
             version
             ;;
-        --delete|--d|--remove|--r)
+        --delete | --remove | -d | -r)
             shift
             RepoName="$1"
             delete_systemd_service
