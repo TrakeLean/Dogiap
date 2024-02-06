@@ -47,9 +47,10 @@ def webhook():
                 return jsonify({"error": "Internal Server Error"}), 500
 
             # Delete the container
-            delete_result = subprocess.run(restart_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-            if delete_result.returncode != 0:
-                logger.error(f"Error deleting container: {delete_result.stderr}")
+            restart_cmd = subprocess.run(restart_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            if restart_cmd.returncode != 0:
+                logger.error(f"Error deleting container: {restart_cmd.stderr}")
+                return jsonify({"error": "Internal Server Error"}), 500
 
             logger.info(f'GitHub - Push event: {ContainerName} updated and restarted')
             return jsonify({"message": f'GitHub - Push event: {ContainerName} updated and restarted'}), 200
