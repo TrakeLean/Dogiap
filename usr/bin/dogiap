@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define the version
-VERSION="1.0.4"
+VERSION="1.0.5"
 ssh_pattern="git@github\.com:.+/.+\.git"
 https_pattern="https://github\.com/.+/.+\.git"
 # ANSI color codes
@@ -297,9 +297,8 @@ function configure_git_ssh() {
     fi
 
     # Check if SSH key exists
-    echo "> Checking if SSH key exists"
     if [ ! -f ~/.ssh/id_rsa ]; then
-        echo "> No SSH key found."
+        print_status "No SSH key found" "failure"
         while true; do
             # Prompt user to generate SSH key
             read -p "$(echo -e "${YELLOW}> Do you want to generate an SSH key? (y/n): ${NC}")" GenerateSsh
@@ -329,8 +328,6 @@ function configure_git_ssh() {
                 echo "> Invalid input. Please enter 'y' or 'n'."
             fi
         done
-    else
-        print_status "Checking if SSH key exists" "success"
     fi
 
     # Start the ssh-agent in the background
@@ -343,19 +340,38 @@ function configure_git_ssh() {
     fi
 
     # Check if SSH key is associated with GitHub
-    echo "> Testing SSH key connection to GitHub"
     if ssh -T git@github.com 2>&1 | grep -q "successfully authenticated"; then
-        print_status "Testing SSH key connection to GitHub" "success"
+        :
     else
-        print_status "Testing SSH key connection to GitHub" "failure"
+        print_status "Testing SSH key connection to GitHub" "failure" 0
         echo "> Please ensure that the SSH key is added to your GitHub account and try again."
+        # Prompt user to ask if they want to fetch the SSH key
+        read -p "$(echo -e "${YELLOW}> Do you want to fetch the SSH key? (y/n): ${NC}")" FetchSsh
+        if [ "$(echo "$FetchSsh" | tr '[:upper:]' '[:lower:]')" = "y" ]; then
+            # Fetch the SSH key
+            echo "> Add the following SSH public key to your Git hosting service:"
+            echo ""
+            cat ~/.ssh/id_rsa.pub
+            echo ""
+
+            # Prompt user to add SSH key to GitHub
+            echo "> Press Enter after adding the SSH key to continue."
+            read -r
+
+            # Test the SSH key connection to GitHub
+            if ssh -T git@github.com 2>&1 | grep -q "successfully authenticated"; then
+                print_status "Testing SSH key connection to GitHub" "success"
+            else
+                print_status "Testing SSH key connection to GitHub" "failure"
+                exit 1
+            fi
+        fi
         exit 1
     fi
     
     # Check if Git is available
-    echo "> Checking if Git is installed"
     if ! command -v git &> /dev/null; then
-        print_status "Checking if Git is installed" "failure"
+        print_status "Checking if Git is installed" "failure" 0
         while true; do
             # Ask if the user wants to install Git
             read -p "$(echo -e "${YELLOW}> Git is not installed. Do you want to install Git? (y/n): ${NC}")" InstallGit
@@ -383,7 +399,7 @@ function configure_git_ssh() {
                 break
             elif [ "$(echo "$InstallGit" | tr '[:upper:]' '[:lower:]')" = "n" ]; then
                 # User chose not to install Git
-                echo "> Git is required for this script. Exiting."
+                print_status "Git is required for this script. Exiting." "failure" 0
                 exit 1
             else
                 echo "> Invalid input. Please enter 'y' or 'n'."
@@ -394,19 +410,34 @@ function configure_git_ssh() {
     fi
 
     # Check if GitHub is already in known hosts
-    echo "> Checking if GitHub is already in the known hosts"
     if grep -q "github.com" ~/.ssh/known_hosts; then
-        print_status "Checking if GitHub is already in the known hosts" "success"
+        :
     else
         # Add GitHub to known hosts
-        print_status "Checking if GitHub is already in the known hosts" "failure"
-        echo "> Adding GitHub to known hosts"
         if ssh-keyscan github.com >> ~/.ssh/known_hosts; then
-            print_status "Adding GitHub to known hosts" "success"
+            :
         else
-            print_status "Adding GitHub to known hosts" "failure"
             exit 1
         fi
+    fi
+
+    # Check if the user has Git configured
+    if ! git config --get user.name; then
+        # Configure Git
+        echo "> Configuring Git"
+        read -p "$(echo -e "${YELLOW}> Enter your name: ${NC}")" UserName
+        read -p "$(echo -e "${YELLOW}> Enter your email address: ${NC}")" UserEmail
+        git config --global user.name "$UserName"
+        git config --global user.email "$UserEmail"
+        print_status "Configuring Git" "success"
+    else
+        print_status "Checking if Git is configured" "success"
+    fi
+
+    # Check if the user's home directory is already added as a safe directory
+    if ! git config --get-all --system safe.directory | grep -q "/home/$USER"; then
+        # If not added, add it as a safe directory
+        git config --system --add safe.directory "/home/$USER"
     fi
 }
 
@@ -518,12 +549,8 @@ main() {
     exit 1
     fi
 
-    # Setup permissions for Docker
-    echo "> Setting up permissions"
-
     # Use chown to give the current user ownership of the current directory and its contents
     chown -R "$USER" "." > /dev/null 2>&1
-    print_status "Setting up permissions" "success"
 
     # Check if the user has Git and SSH set up
     configure_git_ssh
@@ -683,7 +710,7 @@ EOL
     else
         echo -e "${GREEN}> Repository is up-to-date, no changes to commit."
     fi
-    sudo chmod u+s $(pwd)/main.py
+    sudo chmod u+s "$(pwd)/main.py"
     exit 0
 }
 
