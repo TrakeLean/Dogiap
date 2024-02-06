@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define the version
-VERSION="1.0.2"
+VERSION="1.0.3"
 ssh_pattern="git@github\.com:.+/.+\.git"
 https_pattern="https://github\.com/.+/.+\.git"
 # ANSI color codes
@@ -45,14 +45,14 @@ function print_status() {
             echo -e "\033[F\r> ${GREEN}$message${NC}"
             echo -en "\033[K"
         else
-            echo "> ${GREEN}$message${NC}"
+            echo -e "> ${GREEN}$message${NC}"
         fi
     else
         if [ "$overwrite" -eq 1 ]; then
             echo -e "\033[F\r> ${RED}$message${NC}"
             echo -en "\033[K"
         else
-            echo "> ${RED}$message${NC}"
+            echo -e "> ${RED}$message${NC}"
         fi
     fi
 }
@@ -71,13 +71,16 @@ function list_all_services() {
 
         # Iterate through service names
         for service_name in "${service_names[@]}"; do
+            # Remove "dogiap-" prefix when echoing
+            display_name="${service_name/dogiap-/}"
+
             # Check if the service is active (running)
-            if systemctl is-active $service_name &>/dev/null; then
-                # Print service name in green
-                echo -e "\e[32m> $service_name\e[0m \t(Running)"
+            if systemctl is-active --quiet $service_name; then
+                # Print service name without "dogiap-" prefix in green
+                echo -e "\e[32m> $display_name\e[0m \t(Running)"
             else
-                # Print service name in red
-                echo -e "\e[31m> $service_name\e[0m \t(Not Running)"
+                # Print service name without "dogiap-" prefix in red
+                echo -e "\e[31m> $display_name\e[0m \t(Not Running)"
             fi
         done
     fi
@@ -454,7 +457,7 @@ EOF
     sudo systemctl enable dogiap-$RepoName > /dev/null 2>&1
     sudo systemctl start dogiap-$RepoName > /dev/null 2>&1
     sudo systemctl daemon-reload > /dev/null 2>&1
-    sudo systemctl status dogiap-$RepoName
+    sudo systemctl status dogiap-$RepoName > /dev/null 2>&1
     systemctl_status=$?
     if [ $systemctl_status -eq 0 ]; then
         print_status "Creating and starting \"$RepoName\"" "success"
@@ -488,7 +491,7 @@ EOF
     sudo systemctl enable dogiap-$RepoName > /dev/null 2>&1
     sudo systemctl start dogiap-$RepoName > /dev/null 2>&1
     sudo systemctl daemon-reload > /dev/null 2>&1
-    sudo systemctl status dogiap-$RepoName
+    sudo systemctl status dogiap-$RepoName > /dev/null 2>&1
     systemctl_status=$?
     if [ $systemctl_status -eq 0 ]; then
         print_status "Creating and starting \"$RepoName\"" "success"
@@ -622,8 +625,8 @@ EOL
 
    # Create the service file
     if sudo systemctl is-active --quiet dogiap-$RepoName; then
+        # Check if the user wants to rebuild the service
         read -p "$(echo -e "${YELLOW}> Service \"$RepoName\" is already running. Do you want to rebuild? (y/n): ${NC}")" choice
-        # ... (prompt logic remains the same)
         sudo systemctl stop dogiap-$RepoName
         sudo systemctl disable dogiap-$RepoName
         sudo rm /etc/systemd/system/dogiap-$RepoName.service
