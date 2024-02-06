@@ -93,3 +93,5 @@ This project is open-sourced under the [GNU General Public License v3.0](LICENSE
 ---
 
 Enjoy using Dogiap for effortless and automated deployments on your server!
+
+- sudo rm -r Dogiap.deb && sudo apt-get remove -y dogiap && dpkg-deb --build Dogiap && sudo apt-get install -f ~/Dogiap.deb
