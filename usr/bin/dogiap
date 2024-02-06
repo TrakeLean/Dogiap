@@ -15,7 +15,7 @@ WebHookServerUrl="129.242.219.112:5000/git-webhook"
 SERVICE_PATH="/etc/systemd/system"
 
 # Function to display usage information
-usage() {
+function usage() {
     echo -e "Usage: dogiap <GitHub repository link>"
     echo -e "Options:"
     echo -e "  --setup\tSet up server for webhook requests"
@@ -29,7 +29,7 @@ usage() {
 }
 
 # Function to display version information
-version() {
+function version() {
     echo "dogiap version $VERSION"
     exit 0
 }
@@ -176,7 +176,6 @@ function server_setup() {
         print_status "The server is already running" "success" 0
         exit 1
     fi
-    
     configure_git_ssh
     
     # Check if directory exists
@@ -209,8 +208,8 @@ function server_setup() {
         print_status "Directory created" "success"
     fi
 
-    sudo chown -R "$(whoami)" "$DirectoryPath"
-    
+    sudo chown -R $(whoami) $DirectoryPath
+    echo "> CD into $DirectoryPath and initialize an empty Git repository"
     # Change into the directory and initialize an empty Git repository
     (cd "$DirectoryPath" &&
         echo "> Initializing an empty Git repository"
@@ -435,13 +434,13 @@ function configure_git_ssh() {
     fi
 
     # Check if the user's home directory is already added as a safe directory
-    if ! git config --get-all --system safe.directory | grep -q "/home/$USER"; then
+    if ! sudo git config --get-all --system safe.directory | grep -q "/home/$USER"; then
         # If not added, add it as a safe directory
-        git config --system --add safe.directory "/home/$USER"
+        sudo git config --system --add safe.directory "/home/$USER"
     fi
 }
 
-delete_systemd_service() {
+function delete_systemd_service() {
     # Check if RepoName contains "dogiap-"; if not, prepend it
     if [[ ! $RepoName =~ ^dogiap- ]]; then
         RepoName="dogiap-$RepoName"
@@ -462,7 +461,7 @@ delete_systemd_service() {
     fi
 }
 
-create_systemd_service() {    
+function create_systemd_service() {    
     while true; do
         read -p "$(echo -e "${YELLOW}> Enter the command to start the service for $RepoName: ${NC}")" ExecStartCommand
         
@@ -508,7 +507,7 @@ EOF
     done
 }
 
-create_systemd_service_server() {
+function create_systemd_service_server() {
     # Create the directory if it doesn't exist
     SERVICE_FILE="/etc/systemd/system/dogiap-$RepoName.service"
     DirectoryPath="/srv/DogiapHookServer/Hook-Server"
@@ -542,7 +541,7 @@ EOF
     fi
 }
 
-main() {
+function main() {
     # Check if the current directory is empty
     if [ ! -z "$(ls -A)" ]; then
     echo "The current directory is not empty, please run this in an empty directory."

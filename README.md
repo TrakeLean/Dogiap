@@ -94,4 +94,17 @@ This project is open-sourced under the [GNU General Public License v3.0](LICENSE
 
 Enjoy using Dogiap for effortless and automated deployments on your server!
 
-- sudo rm -r Dogiap.deb && sudo apt-get remove -y dogiap && dpkg-deb --build Dogiap && sudo apt-get install -f ~/Dogiap.deb
+- sudo rm -r /srv/DogiapDebFile/Dogiap.deb && sudo apt-get remove -y dogiap && dpkg-deb --build Dogiap && sudo mv Dogiap.deb /srv/DogiapDebFile && sudo apt-get install -f /srv/DogiapDebFile/Dogiap.deb
+
+sudo rm -f /srv/DogiapDebFile/Dogiap.deb && \
+sudo apt-get remove -y dogiap && \
+dpkg-deb --build Dogiap && \
+sudo mv Dogiap.deb /srv/DogiapDebFile/ && \
+cd /srv/DogiapDebFile/ && \
+dpkg-deb -c Dogiap.deb && \
+sudo apt-get install -f ./Dogiap.deb && \
+cd /home/tarek
+
+# Why is this fkr spawning in root
+- sudo rm -r Hook-Server/ && sudo rm -r LICENSE.md && sudo rm -r README.md && sudo rm -r usr/bin/dogiap && sudo rm -r .git
+- sudo rm -r Hook-Server/ && sudo rm -r LICENSE.md && sudo rm -r README.md && sudo rm -r usr/bin/dogiap && sudo rm -r .git
