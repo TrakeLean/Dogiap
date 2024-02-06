@@ -192,11 +192,10 @@ function server_setup() {
                 sudo rm -r "$DirectoryPath"  # Delete existing directory
                 sudo mkdir "$DirectoryPath"   # Create a new directory
                 # Check if the directory was created successfully
-                echo " "
                 if [ $? -eq 0 ]; then
-                    print_status "Directory '$DirectoryPath' created" "success"
+                    print_status "Directory '$DirectoryPath' created" "success" 0
                 else
-                    print_status "Failed to create the '$DirectoryPath' Exiting." "failed"
+                    print_status "Failed to create the '$DirectoryPath' Exiting." "failed" 0
                     exit 1
                 fi
                 break
