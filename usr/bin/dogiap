@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define the version
-VERSION="1.0.3"
+VERSION="1.0.4"
 ssh_pattern="git@github\.com:.+/.+\.git"
 https_pattern="https://github\.com/.+/.+\.git"
 # ANSI color codes
@@ -141,10 +141,9 @@ function check() {
 }
 
 function start() {
-    echo "> Starting the server"
-    RepoName=dogiap-hook-server
+    echo "> Starting $RepoName"
     # Specify the path to the Systemd service file
-    local SERVICE_FILE="$SERVICE_PATH/$RepoName.service"
+    local SERVICE_FILE="$SERVICE_PATH/dogiap-$RepoName.service"
 
 
     # Check service file existence and prompt for setup
@@ -152,20 +151,19 @@ function start() {
 
     # Check if the Systemd service is already active
     if sudo systemctl is-active --quiet $RepoName; then
-        print_status "The server is already running" "success"
+        print_status "$RepoName is already running" "success" 0
         exit 1
     else
         sudo systemctl start $RepoName > /dev/null 2>&1
         local start_status=$?
         if [ "$start_status" -eq 0 ]; then
-            print_status "The server has been started" "success"
+            print_status "Starting $RepoName" "success"
         else
-            print_status "Failed to start the server" "failure"
+            print_status "Starting $RepoName" "failure"
             exit 1
         fi
     fi
 }
-
 
 function server_setup() {
     DirectoryPath="/srv/DogiapHookServer"
@@ -213,43 +211,43 @@ function server_setup() {
 
     sudo chown -R "$(whoami)" "$DirectoryPath"
     
-    # Change into the directory
-    cd $DirectoryPath || exit
+    # Change into the directory and initialize an empty Git repository
+    (cd "$DirectoryPath" &&
+        echo "> Initializing an empty Git repository"
+        git init --quiet
+        # Check if Git repository initialization was successful
+        if [ $? -eq 0 ]; then
+            print_status "Initializing an empty Git repository" "success"
+        else
+            print_status "Initializing an empty Git repository" "failed"
+            exit 1
+        fi
 
-    echo "> Initializing an empty Git repository"
-    # Initialize an empty Git repository
-    git init --quiet
+        # Attempt to add the remote origin without displaying output
+        echo "> Adding remote 'origin'"
+        git remote add -f origin https://github.com/TrakeLean/Dogiap > /dev/null 2>&1
+        # Check if the remote was added successfully
+        if [ $? -eq 0 ]; then
+            print_status "Adding remote 'origin'" "success"
+        else
+            print_status "Adding remote 'origin'" "failed"
+            exit 1
+        fi
 
-    # Check if Git repository initialization was successful
-    if [ $? -eq 0 ]; then
-        print_status "Initializing an empty Git repository" "success"
-    else
-        print_status "Initializing an empty Git repository" "failed"
-        exit 1
-    fi
+        git config core.sparseCheckout true
+        echo "Hook-Server/*" >> .git/info/sparse-checkout
 
-    # Attempt to add the remote origin without displaying output
-    echo "> Adding remote 'origin'"
-    git remote add -f origin https://github.com/TrakeLean/Dogiap > /dev/null 2>&1
-    # Check if the remote was added successfully
-    if [ $? -eq 0 ]; then
-        print_status "Adding remote 'origin'" "success"
-    else
-        print_status "Adding remote 'origin'" "failed"
-        exit 1
-    fi
+        # Pull changes from the remote repository
+        echo "> Fetching the contents of 'Hook-Server' folder"
+        if git pull --quiet origin main; then
+            print_status "Fetching the contents of 'Hook-Server' folder" "success"
+        else
+            print_status "Fetching the contents of 'Hook-Server' folder" "failed"
+            exit 1
+        fi
+    ) || exit
 
-    git config core.sparseCheckout true
-    echo "Hook-Server/*" >> .git/info/sparse-checkout
 
-    # Pull changes from the remote repository
-    echo "> Fetching the contents of 'Hook-Server' folder"
-    if git pull --quiet origin main; then
-        print_status "Fetching the contents of 'Hook-Server' folder" "success"
-    else
-        print_status "Fetching the contents of 'Hook-Server' folder" "failed"
-        exit 1
-    fi
 
     # Open port 5000 in the firewall
     sudo ufw allow 5000 > /dev/null 2>&1
@@ -433,11 +431,14 @@ delete_systemd_service() {
     fi
 }
 
-create_systemd_service() {
-    # Create the directory if it doesn't exist
-    SERVICE_FILE="/etc/systemd/system/dogiap-$RepoName.service"
-    # Create the service file
-    cat << EOF | sudo tee "$SERVICE_FILE" >/dev/null
+create_systemd_service() {    
+    while true; do
+        read -p "$(echo -e "${YELLOW}> Enter the command to start the service for $RepoName: ${NC}")" ExecStartCommand
+        
+        # Create the directory if it doesn't exist
+        SERVICE_FILE="/etc/systemd/system/dogiap-$RepoName.service"
+        # Create the service file
+        cat << EOF | sudo tee "$SERVICE_FILE" >/dev/null
 [Unit]
 Description=Service for $RepoName
 
@@ -445,25 +446,35 @@ Description=Service for $RepoName
 Type=simple
 User=$USER
 WorkingDirectory=$(pwd)
-ExecStart=/usr/bin/python3 $(pwd)/main.py
+ExecStart=$ExecStartCommand
 Restart=always
 
 [Install]
 WantedBy=multi-user.target
 EOF
-    echo "> Creating and starting \"$RepoName\""
-    # Enable and start the service
-    sudo systemctl enable dogiap-$RepoName > /dev/null 2>&1
-    sudo systemctl start dogiap-$RepoName > /dev/null 2>&1
-    sudo systemctl daemon-reload > /dev/null 2>&1
-    sudo systemctl status dogiap-$RepoName > /dev/null 2>&1
-    systemctl_status=$?
-    if [ $systemctl_status -eq 0 ]; then
-        print_status "Creating and starting \"$RepoName\"" "success"
-    else
-        print_status "Creating and starting \"$RepoName\"" "failure"
-        exit 1
-    fi
+        echo "> Creating and starting \"$RepoName\""
+        # Enable and start the service
+        sudo systemctl enable dogiap-$RepoName > /dev/null 2>&1
+        sudo systemctl start dogiap-$RepoName > /dev/null 2>&1
+        sudo systemctl daemon-reload > /dev/null 2>&1
+        sudo systemctl status dogiap-$RepoName > /dev/null 2>&1
+        systemctl_status=$?
+        
+        if [ $systemctl_status -eq 0 ]; then
+            print_status "Creating and starting \"$RepoName\"" "success"
+            break
+        else
+            # Check if failure is due to ExecStart command
+            if systemctl status dogiap-$RepoName | grep -q "ExecStart"; then
+                echo "Failed to start the service. Please check the command and try again."
+                # Remove previously created service file
+                sudo rm "$SERVICE_FILE"
+            else
+                print_status "Creating and starting \"$RepoName\"" "failure"
+                exit 1
+            fi
+        fi
+    done
 }
 
 create_systemd_service_server() {
@@ -479,7 +490,7 @@ Description=Service for $RepoName
 Type=simple
 User=$USER
 WorkingDirectory=$DirectoryPath
-ExecStart=/usr/bin/python3 $DirectoryPath/main.py
+ExecStart=python3 $DirectoryPath/main.py
 Restart=always
 
 [Install]
@@ -518,11 +529,11 @@ main() {
     configure_git_ssh
 
     echo "> Cloning Git repository from $SshUrl"
-    # Clone the Git repository into the current directory
-    git clone -q $SshUrl . > /dev/null 2>&1
-
-    # Check if the clone was successful
-    if [ $? -eq 0 ]; then
+    # Attempt to clone the repository
+    if git clone -q $SshUrl . 2>&1 | grep -q "Permission denied"; then
+        print_status "Permission denied while cloning Git repository from $SshUrl" "failure"
+        exit 1
+    elif [ $? -eq 0 ]; then
         print_status "Cloning Git repository from $SshUrl" "success"
     else
         print_status "Cloning Git repository from $SshUrl" "failure"
