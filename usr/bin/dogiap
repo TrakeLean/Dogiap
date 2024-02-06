@@ -758,6 +758,7 @@ while [ "$#" -gt 0 ]; do
             list_all_services
             ;;
         --log)
+            shift
             RepoName="$1"
             print_service_logs
             ;;
