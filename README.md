@@ -31,39 +31,25 @@ To install and set up the Dogiap package, perform the following steps:
 
 1. Clone the repository from GitHub:
     ```bash
-    git clone https://github.com/yourusername/yourproject.git
+    git clone https://github.com/TrakeLean/Dogiap.git
     ```
 
-2. Navigate to the project directory:
-    ```bash
-    cd yourproject
-    ```
-
-3. Begin by building the Debian package with:
+2. Begin by building the Debian package with:
     ```bash
     dpkg-deb --build Dogiap
     ```
 
-4. If you wish to inspect the contents of the generated Debian package, you can do so with:
+3. If you wish to inspect the contents of the generated Debian package, you can do so with:
     ```bash
     dpkg-deb -c Dogiap.deb
     ```
 
-5. Proceed to install the package using `apt-get`. The `-f` flag is used to ensure that any missing dependencies are also installed:
+4. Proceed to install the package using `apt-get`. The `-f` flag is used to ensure that any missing dependencies are also installed:
     ```bash
     sudo apt-get install -f ./Dogiap.deb
     ```
 
 These steps will ensure that the Dogiap package is built and installed correctly on your system.
-
-6. Once the package is installed, use the setup script to configure Dogiap. Make sure to replace `your-repository` with the name of your local cloned repository and use the appropriate URL for your GitHub repository:
-    
-    ```bash
-    cd your-repository/
-    dogiap --setup git@github.com:TrakeLean/Dogiap.git
-    ```
-
-Make sure you modify the commands with the correct repository URLs and paths as required for your specific project and setup.
 
 ### Setting Up the Web Server
 
@@ -75,15 +61,15 @@ The server must be configured to handle incoming webhook requests:
 
 ## Usage
 
-- To start the server: `dogiap --start`
-- To check if the server is running: `dogiap --check`
+- To setup the server: `dogiap --setup`
 - To list all services: `dogiap --list`
-- To view the service logs: `dogiap --log`
-- To delete a service: `dogiap --delete servicename`
+- To start the server: `dogiap --start <repo name>`
+- To view the service logs: `dogiap --log <repo name>`
+- To delete a service: `dogiap --delete <repo name>`
 
 ## Version
 
-The current version of the project script is 1.0.6.
+The current version of the project script is 1.0.12.
 
 ## Contributions
 
