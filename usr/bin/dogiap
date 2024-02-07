@@ -307,6 +307,7 @@ function server_setup() {
 
 function configure_git_ssh() {
     # Check if SSH is available
+    echo ""
     if ! command -v ssh &> /dev/null; then
         while true; do
             # Ask if the user wants to install SSH
