@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define the version
-VERSION="1.0.11"
+VERSION="1.0.12"
 ssh_pattern="git@github\.com:.+/.+\.git"
 https_pattern="https://github\.com/.+/.+\.git"
 # ANSI color codes
@@ -34,6 +34,16 @@ function usage() {
 function version() {
     echo "dogiap version $VERSION"
     exit 0
+}
+
+# Function to extract repository name from URL
+function get_repo_name() {
+    local url=$1
+    # Remove the trailing .git if present
+    url=${url%.git}
+    # Extract the part after the last /
+    repo_name=$(basename "$url")
+    echo "$repo_name"
 }
 
 # Print status message to the terminal
@@ -509,7 +519,7 @@ function delete_systemd_service() {
 
 function create_systemd_service() {    
     while true; do
-        read -p "$(echo -e "${YELLOW}> Enter the command to start the service for $RepoName: ${NC}")" ExecStartCommand
+        read -p "$(echo -e "${YELLOW}> Executable command for $RepoName (e.g. python3 main.py): ${NC}")" ExecStartCommand
         
         # Create the directory if it doesn't exist
         SERVICE_FILE="/etc/systemd/system/dogiap-$RepoName.service"
@@ -588,6 +598,16 @@ EOF
 }
 
 function main() {
+
+    # Extract repository name from the URL
+    RepoName=$(get_repo_name "$SshUrl")
+
+    # Create a directory with the repository name
+    mkdir -p "$RepoName"
+
+    # Change into the directory
+    cd "$RepoName" || exit
+
     # Check if the current directory is empty
     if [ ! -z "$(ls -A)" ]; then
     echo "The current directory is not empty, please run this in an empty directory."
