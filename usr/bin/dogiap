@@ -519,7 +519,7 @@ function delete_systemd_service() {
 
 function create_systemd_service() {    
     while true; do
-        read -p "$(echo -e "${YELLOW}> Enter the command to start the service for $RepoName: ${NC}")" ExecStartCommand
+        read -p "$(echo -e "${YELLOW}> Executable command for $RepoName (e.g. python3 main.py): ${NC}")" ExecStartCommand
         
         # Create the directory if it doesn't exist
         SERVICE_FILE="/etc/systemd/system/dogiap-$RepoName.service"
@@ -613,7 +613,7 @@ function main() {
     echo "The current directory is not empty, please run this in an empty directory."
     exit 1
     fi
-    
+
     # Use chown to give the current user ownership of the current directory and its contents
     chown -R "$USER" "." > /dev/null 2>&1
 
