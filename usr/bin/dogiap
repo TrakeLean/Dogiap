@@ -598,11 +598,6 @@ EOF
 }
 
 function main() {
-    # Check if the current directory is empty
-    if [ ! -z "$(ls -A)" ]; then
-    echo "The current directory is not empty, please run this in an empty directory."
-    exit 1
-    fi
 
     # Extract repository name from the URL
     RepoName=$(get_repo_name "$SshUrl")
@@ -613,6 +608,12 @@ function main() {
     # Change into the directory
     cd "$RepoName" || exit
 
+    # Check if the current directory is empty
+    if [ ! -z "$(ls -A)" ]; then
+    echo "The current directory is not empty, please run this in an empty directory."
+    exit 1
+    fi
+    
     # Use chown to give the current user ownership of the current directory and its contents
     chown -R "$USER" "." > /dev/null 2>&1
 
