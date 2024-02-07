@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define the version
-VERSION="1.0.10"
+VERSION="1.0.11"
 ssh_pattern="git@github\.com:.+/.+\.git"
 https_pattern="https://github\.com/.+/.+\.git"
 # ANSI color codes
@@ -20,11 +20,10 @@ function usage() {
     echo -e "${CYAN}Usage:${NC} dogiap <GitHub repository link>"
     echo -e "${CYAN}Options:${NC}"
     echo -e "  ${YELLOW}--setup${NC}\tSet up server for webhook requests"
-    echo -e "  ${YELLOW}--start${NC}\tStart the server"
-    echo -e "  ${YELLOW}--check${NC}\tCheck if the server is running"
     echo -e "  ${YELLOW}--list${NC}\tList all services"
-    echo -e "  ${YELLOW}--log${NC}\t\tPrint out the logs for the service"
-    echo -e "  ${YELLOW}--delete${NC}\tDelete the service"
+    echo -e "  ${YELLOW}--start <name>${NC}\tStart a service"
+    echo -e "  ${YELLOW}--log <name>${NC}\tPrint out the logs for the service"
+    echo -e "  ${YELLOW}--delete <name>${NC}\tDelete the service"
     echo -e "  ${YELLOW}--version${NC}\tDisplay version information"
     echo -e "  ${YELLOW}--help${NC}\tDisplay this usage information"
     exit 1
@@ -112,37 +111,37 @@ function check_SERVICE_FILE() {
     fi
 }
 
-function check() {
-    # Specify the path to the Systemd service file
-    RepoName=dogiap-hook-server
-    local SERVICE_FILE="$SERVICE_PATH/$RepoName.service"
+# function check() {
+#     # Specify the path to the Systemd service file
+#     RepoName=dogiap-hook-server
+#     local SERVICE_FILE="$SERVICE_PATH/$RepoName.service"
 
-    # Check service file existence and prompt for setup
-    check_SERVICE_FILE "$SERVICE_FILE"
+#     # Check service file existence and prompt for setup
+#     check_SERVICE_FILE "$SERVICE_FILE"
 
-    # Check if the Systemd service is active
-    if sudo systemctl is-active --quiet $RepoName; then
-        print_status "The server is running." "success" 0
-    else
-        print_status "The server is not running." "failure" 0
+#     # Check if the Systemd service is active
+#     if sudo systemctl is-active --quiet $RepoName; then
+#         print_status "The server is running." "success" 0
+#     else
+#         print_status "The server is not running." "failure" 0
         
-        while true; do
-            read -p "$(echo -e "${YELLOW}> Do you want to start the server? (y/n): ")" choice
-            case "${choice,,}" in
-                y)
-                    start
-                    break
-                    ;;
-                n)
-                    exit 1
-                    ;;
-                *)
-                    echo "> Invalid input. Please enter 'y' or 'n'."
-                    ;;
-            esac
-        done
-    fi
-}
+#         while true; do
+#             read -p "$(echo -e "${YELLOW}> Do you want to start the server? (y/n): ")" choice
+#             case "${choice,,}" in
+#                 y)
+#                     start
+#                     break
+#                     ;;
+#                 n)
+#                     exit 1
+#                     ;;
+#                 *)
+#                     echo "> Invalid input. Please enter 'y' or 'n'."
+#                     ;;
+#             esac
+#         done
+#     fi
+# }
 
 # Function to print out the logs for the service
 function print_service_logs() {
@@ -155,14 +154,9 @@ function print_service_logs() {
     fi
 
     # Check if the service is already active
-    if sudo systemctl is-active --quiet "dogiap-$RepoName"; then
-        echo -e "${GREEN}Logs for service '${RepoName}':${NC}"
-        sudo journalctl -u "dogiap-$RepoName" -n 15 --no-pager
-        exit 0
-    else
-        echo -e "${YELLOW}Warning:${NC} Service '${RepoName}' is not running."
-        exit 1
-    fi
+    echo -e "${GREEN}Logs for service '${RepoName}':${NC}"
+    sudo journalctl -u "dogiap-$RepoName" -n 15 --no-pager
+    exit 0
 }
 
 function start() {
@@ -778,10 +772,9 @@ while [ "$#" -gt 0 ]; do
             server_setup
             ;;
         --start)
+            shift
+            RepoName="$1"
             start
-            ;;
-        --check)
-            check
             ;;
         --list)
             list_all_services
