@@ -22,11 +22,11 @@ function usage() {
     echo -e "  ${YELLOW}--setup${NC}\tSet up server for webhook requests"
     echo -e "  ${YELLOW}--start${NC}\tStart the server"
     echo -e "  ${YELLOW}--check${NC}\tCheck if the server is running"
-    echo -e "  ${YELLOW}--list${NC}\t\tList all services"
+    echo -e "  ${YELLOW}--list${NC}\tList all services"
     echo -e "  ${YELLOW}--log${NC}\t\tPrint out the logs for the service"
     echo -e "  ${YELLOW}--delete${NC}\tDelete the service"
     echo -e "  ${YELLOW}--version${NC}\tDisplay version information"
-    echo -e "  ${YELLOW}--help${NC}\t\tDisplay this usage information"
+    echo -e "  ${YELLOW}--help${NC}\tDisplay this usage information"
     exit 1
 }
 
