@@ -44,9 +44,10 @@ def webhook():
         
             # Pull changes from the Git repository
             pull_result = subprocess.run(pull_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            print(pull_result)
             if pull_result.returncode != 0:
                 logger.error(f"Error pulling changes: {pull_result.stderr}")
-                return jsonify({"error": "Error pulling changes: {pull_result.stderr}"}), 500
+                return jsonify({"error": "Error pulling changes"}), 500
             logger.info(f'GitHub - Push event: {ContainerName} updated')
 
         #     # Delete the container
