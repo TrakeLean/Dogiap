@@ -196,6 +196,12 @@ function server_setup() {
     # Specify the path to the Systemd service file
     local SERVICE_FILE="$SERVICE_PATH/dogiap-$RepoName"
 
+    # Check if the line exists in the sudoers file
+    if ! sudo grep -qxF "$USER ALL=(ALL) NOPASSWD: /bin/systemctl start *, /bin/systemctl stop *, /bin/systemctl is-active *, /bin/systemctl disable *, /bin/systemctl enable *, /bin/systemctl daemon-reload, /bin/systemctl status *" /etc/sudoers.d/systemctl_commands; then
+        # If not present, append the line to the sudoers file
+        echo "$USER ALL=(ALL) NOPASSWD: /bin/systemctl start *, /bin/systemctl stop *, /bin/systemctl is-active *, /bin/systemctl disable *, /bin/systemctl enable *, /bin/systemctl daemon-reload, /bin/systemctl status *" | sudo tee -a /etc/sudoers.d/systemctl_commands
+    fi
+
     # Check if the server is already running
     if sudo systemctl is-active --quiet dogiap-$RepoName; then
         print_status "The server is already running" "success" 0
