@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define the version
-VERSION="1.0.7"
+VERSION="1.0.8"
 ssh_pattern="git@github\.com:.+/.+\.git"
 https_pattern="https://github\.com/.+/.+\.git"
 # ANSI color codes
@@ -196,10 +196,18 @@ function server_setup() {
     # Specify the path to the Systemd service file
     local SERVICE_FILE="$SERVICE_PATH/dogiap-$RepoName"
 
+    # Check if the file exists
+    if [ ! -f "/etc/sudoers.d/systemctl_commands" ]; then
+        # Create the file if it doesn't exist
+        sudo touch /etc/sudoers.d/systemctl_commands > /dev/null 2>&1
+        # Set proper permissions for the file
+        sudo chmod 440 /etc/sudoers.d/systemctl_commands > /dev/null 2>&1
+    fi
+
     # Check if the line exists in the sudoers file
-    if ! sudo grep -qxF "$USER ALL=(ALL) NOPASSWD: /bin/systemctl start *, /bin/systemctl stop *, /bin/systemctl restart *, /bin/systemctl is-active *, /bin/systemctl disable *, /bin/systemctl enable *, /bin/systemctl daemon-reload, /bin/systemctl status *" /etc/sudoers.d/systemctl_commands; then
+    if ! sudo grep -qxF "$USER ALL=(ALL) NOPASSWD: /bin/systemctl start dogiap-*, /bin/systemctl stop dogiap-*, /bin/systemctl restart dogiap-*, /bin/systemctl is-active dogiap-*, /bin/systemctl disable dogiap-*, /bin/systemctl enable dogiap-*, /bin/systemctl daemon-reload, /bin/systemctl status dogiap-*" /etc/sudoers.d/systemctl_commands; then
         # If not present, append the line to the sudoers file
-        echo "$USER ALL=(ALL) NOPASSWD: /bin/systemctl start *, /bin/systemctl stop *, /bin/systemctl restart *, /bin/systemctl is-active *, /bin/systemctl disable *, /bin/systemctl enable *, /bin/systemctl daemon-reload, /bin/systemctl status *" | sudo tee -a /etc/sudoers.d/systemctl_commands
+        echo "$USER ALL=(ALL) NOPASSWD: /bin/systemctl start dogiap-*, /bin/systemctl stop dogiap-*, /bin/systemctl restart dogiap-*, /bin/systemctl is-active dogiap-*, /bin/systemctl disable dogiap-*, /bin/systemctl enable dogiap-*, /bin/systemctl daemon-reload, /bin/systemctl status dogiap-*" | sudo tee -a /etc/sudoers.d/systemctl_commands > /dev/null 2>&1
     fi
 
     # Check if the server is already running
