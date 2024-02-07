@@ -195,8 +195,8 @@ function start() {
 
 # Function to append a service to the sudoers file
 append_service() {
-    if ! sudo grep -qxF "/bin/systemctl $1 dogiap-$RepoName" /etc/sudoers.d/systemctl_commands; then
-        echo "$service_rules, /bin/systemctl $1 dogiap-$RepoName" | sudo tee -a /etc/sudoers.d/systemctl_commands > /dev/null 2>&1
+    if ! sudo grep -qxF "dogiap-$RepoName" /etc/sudoers.d/systemctl_commands; then
+        echo "$service_rules" | sudo tee -a /etc/sudoers.d/systemctl_commands > /dev/null 2>&1
     fi
 }
 
@@ -214,10 +214,12 @@ function server_setup() {
         sudo chmod 440 /etc/sudoers.d/systemctl_commands > /dev/null 2>&1
         else
         # Clear the file if it exists
-        sudo echo "" > /etc/sudoers.d/systemctl_commands > /dev/null 2>&1
+        echo "$base_rule" | sudo tee /etc/sudoers.d/systemctl_commands > /dev/null 2>&1
+
     fi
 
-    append_service "dogiap-$RepoName"
+    # Append the service to the sudoers file
+    append_service
 
     # Check if the server is already running
     if sudo systemctl is-active --quiet dogiap-$RepoName; then
@@ -599,7 +601,6 @@ function main() {
     # Use chown to give the current user ownership of the current directory and its contents
     chown -R "$USER" "." > /dev/null 2>&1
 
-    append_service "dogiap-$RepoName"
 
     # Check if the user has Git and SSH set up
     configure_git_ssh
@@ -656,6 +657,9 @@ function main() {
             fi
         fi
     fi
+
+    # Append the service to the sudoers file
+    append_service
 
     # Check if GitHub Actions workflow file already exists
     if [ -f "$WorkflowFilePath" ]; then
