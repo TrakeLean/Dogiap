@@ -19,13 +19,13 @@ SERVICE_PATH="/etc/systemd/system"
 function usage() {
     echo -e "${CYAN}Usage:${NC} dogiap <GitHub repository link>"
     echo -e "${CYAN}Options:${NC}"
-    echo -e "  ${YELLOW}--setup${NC}\tSet up server for webhook requests"
-    echo -e "  ${YELLOW}--list${NC}\tList all services"
-    echo -e "  ${YELLOW}--start <name>${NC}\tStart a service"
-    echo -e "  ${YELLOW}--log <name>${NC}\tPrint out the logs for the service"
-    echo -e "  ${YELLOW}--delete <name>${NC}\tDelete the service"
-    echo -e "  ${YELLOW}--version${NC}\tDisplay version information"
-    echo -e "  ${YELLOW}--help${NC}\tDisplay this usage information"
+    echo -e "  ${YELLOW}--setup${NC}\t\tSet up server for webhook requests"
+    echo -e "  ${YELLOW}--list${NC}\t\tList all services"
+    echo -e "  ${YELLOW}--start\t<name>${NC}\tStart a service"
+    echo -e "  ${YELLOW}--log\t\t<name>${NC}\tPrint out the logs for the service"
+    echo -e "  ${YELLOW}--delete\t<name>${NC}\tDelete the service"
+    echo -e "  ${YELLOW}--version${NC}\t\tDisplay version information"
+    echo -e "  ${YELLOW}--help${NC}\t\tDisplay this usage information"
     exit 1
 }
 
