@@ -193,20 +193,18 @@ function start() {
 # Function to append a service to the sudoers file
 append_service() {
     local RepoName="$1"
-    local Entry="/bin/systemctl start $RepoName, /bin/systemctl stop $RepoName, /bin/systemctl restart $RepoName, /bin/systemctl is-active $RepoName, /bin/systemctl disable $RepoName, /bin/systemctl enable $RepoName, /bin/systemctl daemon-reload, /bin/systemctl status $RepoName, "
-    
-    # Check if the "user ALL=(ALL) NOPASSWD:" part already exists in the file
-    if ! sudo grep -qxF "$USER ALL=(ALL) NOPASSWD:" /etc/sudoers.d/systemctl_commands; then
-        # Prepend the "$USER ALL=(ALL) NOPASSWD:" part to the entry
-        Entry="$USER ALL=(ALL) NOPASSWD: $Entry"
-    fi
-    
-    # Check if the entire entry exists in the file
-    if ! sudo grep -qxF "$Entry" /etc/sudoers.d/systemctl_commands; then
-        echo "$Entry" | sudo tee -a /etc/sudoers.d/systemctl_commands > /dev/null 2>&1
+    local Entry="/bin/systemctl start $RepoName, /bin/systemctl stop $RepoName, /bin/systemctl restart $RepoName, /bin/systemctl is-active $RepoName, /bin/systemctl disable $RepoName, /bin/systemctl enable $RepoName, /bin/systemctl daemon-reload, /bin/systemctl status $RepoName"
+
+    # Check if the service entry already exists in the sudoers file
+    if ! sudo grep -qxF "$RepoName" /etc/sudoers.d/systemctl_commands; then
+        # Append the entry to the sudoers file
+        if [ ! -s "/etc/sudoers.d/systemctl_commands" ]; then
+            echo -n "$USER ALL=(ALL) NOPASSWD: $Entry" | sudo tee -a /etc/sudoers.d/systemctl_commands > /dev/null 2>&1
+        else
+            echo -n ", $Entry" | sudo tee -a /etc/sudoers.d/systemctl_commands > /dev/null 2>&1
+        fi
     fi
 }
-
 
 function server_setup() {
     DirectoryPath="/srv/DogiapHookServer"

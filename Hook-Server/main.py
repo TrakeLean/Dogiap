@@ -38,7 +38,7 @@ def webhook():
             error_raise(ProgramPath)
             
             pull_cmd = f'cd {ProgramPath} && git pull'
-            restart_cmd = f'systemctl restart dogiap-{ContainerName}'
+            restart_cmd = f'sudo systemctl restart dogiap-{ContainerName}'
         
             # Pull changes from the Git repository
             pull_result = subprocess.run(pull_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
