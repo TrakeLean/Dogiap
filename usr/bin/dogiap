@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define the version
-VERSION="1.0.8"
+VERSION="1.0.9"
 ssh_pattern="git@github\.com:.+/.+\.git"
 https_pattern="https://github\.com/.+/.+\.git"
 # ANSI color codes
@@ -14,6 +14,8 @@ NC='\033[0m' # No Color
 WorkflowFilePath="./.github/workflows/automatic-pull.yml"
 WebHookServerUrl="129.242.219.112:5000/git-webhook"
 SERVICE_PATH="/etc/systemd/system"
+# Define the base sudo rule
+base_rule="$USER ALL=(ALL) NOPASSWD: /bin/systemctl start dogiap-$RepoName, /bin/systemctl stop dogiap-$RepoName, /bin/systemctl restart dogiap-$RepoName, /bin/systemctl is-active dogiap-$RepoName, /bin/systemctl disable dogiap-$RepoName, /bin/systemctl enable dogiap-$RepoName, /bin/systemctl daemon-reload, /bin/systemctl status dogiap-$RepoName"
 
 # Function to display usage information
 function usage() {
@@ -190,6 +192,18 @@ function start() {
     fi
 }
 
+# Function to check if a service is already included in the sudoers file
+service_exists() {
+    sudo grep -qxF "/bin/systemctl $1 dogiap-$RepoName" /etc/sudoers.d/systemctl_commands
+}
+
+# Function to append a service to the sudoers file
+append_service() {
+    if ! service_exists "$1"; then
+        echo "$base_rule, /bin/systemctl $1 dogiap-$RepoName" | sudo tee -a /etc/sudoers.d/systemctl_commands > /dev/null 2>&1
+    fi
+}
+
 function server_setup() {
     DirectoryPath="/srv/DogiapHookServer"
     RepoName=hook-server
@@ -204,11 +218,7 @@ function server_setup() {
         sudo chmod 440 /etc/sudoers.d/systemctl_commands > /dev/null 2>&1
     fi
 
-    # Check if the line exists in the sudoers file
-    if ! sudo grep -qxF "$USER ALL=(ALL) NOPASSWD: /bin/systemctl start dogiap-*, /bin/systemctl stop dogiap-*, /bin/systemctl restart dogiap-*, /bin/systemctl is-active dogiap-*, /bin/systemctl disable dogiap-*, /bin/systemctl enable dogiap-*, /bin/systemctl daemon-reload, /bin/systemctl status dogiap-*" /etc/sudoers.d/systemctl_commands; then
-        # If not present, append the line to the sudoers file
-        echo "$USER ALL=(ALL) NOPASSWD: /bin/systemctl start dogiap-*, /bin/systemctl stop dogiap-*, /bin/systemctl restart dogiap-*, /bin/systemctl is-active dogiap-*, /bin/systemctl disable dogiap-*, /bin/systemctl enable dogiap-*, /bin/systemctl daemon-reload, /bin/systemctl status dogiap-*" | sudo tee -a /etc/sudoers.d/systemctl_commands > /dev/null 2>&1
-    fi
+    append_service "dogiap-$RepoName"
 
     # Check if the server is already running
     if sudo systemctl is-active --quiet dogiap-$RepoName; then
@@ -588,6 +598,8 @@ function main() {
 
     # Use chown to give the current user ownership of the current directory and its contents
     chown -R "$USER" "." > /dev/null 2>&1
+
+    append_service "dogiap-$RepoName"
 
     # Check if the user has Git and SSH set up
     configure_git_ssh
