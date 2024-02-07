@@ -15,7 +15,8 @@ WorkflowFilePath="./.github/workflows/automatic-pull.yml"
 WebHookServerUrl="129.242.219.112:5000/git-webhook"
 SERVICE_PATH="/etc/systemd/system"
 # Define the base sudo rule
-base_rule="$USER ALL=(ALL) NOPASSWD: /bin/systemctl start dogiap-$RepoName, /bin/systemctl stop dogiap-$RepoName, /bin/systemctl restart dogiap-$RepoName, /bin/systemctl is-active dogiap-$RepoName, /bin/systemctl disable dogiap-$RepoName, /bin/systemctl enable dogiap-$RepoName, /bin/systemctl daemon-reload, /bin/systemctl status dogiap-$RepoName"
+base_rule="$USER ALL=(ALL) NOPASSWD: "
+service_rules="/bin/systemctl start dogiap-$RepoName, /bin/systemctl stop dogiap-$RepoName, /bin/systemctl restart dogiap-$RepoName, /bin/systemctl is-active dogiap-$RepoName, /bin/systemctl disable dogiap-$RepoName, /bin/systemctl enable dogiap-$RepoName, /bin/systemctl daemon-reload, /bin/systemctl status dogiap-$RepoName, "
 
 # Function to display usage information
 function usage() {
@@ -192,15 +193,10 @@ function start() {
     fi
 }
 
-# Function to check if a service is already included in the sudoers file
-service_exists() {
-    sudo grep -qxF "/bin/systemctl $1 dogiap-$RepoName" /etc/sudoers.d/systemctl_commands
-}
-
 # Function to append a service to the sudoers file
 append_service() {
-    if ! service_exists "$1"; then
-        echo "$base_rule, /bin/systemctl $1 dogiap-$RepoName" | sudo tee -a /etc/sudoers.d/systemctl_commands > /dev/null 2>&1
+    if ! sudo grep -qxF "/bin/systemctl $1 dogiap-$RepoName" /etc/sudoers.d/systemctl_commands; then
+        echo "$service_rules, /bin/systemctl $1 dogiap-$RepoName" | sudo tee -a /etc/sudoers.d/systemctl_commands > /dev/null 2>&1
     fi
 }
 
@@ -216,6 +212,9 @@ function server_setup() {
         sudo touch /etc/sudoers.d/systemctl_commands > /dev/null 2>&1
         # Set proper permissions for the file
         sudo chmod 440 /etc/sudoers.d/systemctl_commands > /dev/null 2>&1
+        else
+        # Clear the file if it exists
+        sudo echo "" > /etc/sudoers.d/systemctl_commands > /dev/null 2>&1
     fi
 
     append_service "dogiap-$RepoName"
