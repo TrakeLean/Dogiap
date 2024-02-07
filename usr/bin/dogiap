@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define the version
-VERSION="1.0.6"
+VERSION="1.0.7"
 ssh_pattern="git@github\.com:.+/.+\.git"
 https_pattern="https://github\.com/.+/.+\.git"
 # ANSI color codes
@@ -197,9 +197,9 @@ function server_setup() {
     local SERVICE_FILE="$SERVICE_PATH/dogiap-$RepoName"
 
     # Check if the line exists in the sudoers file
-    if ! sudo grep -qxF "$USER ALL=(ALL) NOPASSWD: /bin/systemctl start *, /bin/systemctl stop *, /bin/systemctl is-active *, /bin/systemctl disable *, /bin/systemctl enable *, /bin/systemctl daemon-reload, /bin/systemctl status *" /etc/sudoers.d/systemctl_commands; then
+    if ! sudo grep -qxF "$USER ALL=(ALL) NOPASSWD: /bin/systemctl start *, /bin/systemctl stop *, /bin/systemctl restart *, /bin/systemctl is-active *, /bin/systemctl disable *, /bin/systemctl enable *, /bin/systemctl daemon-reload, /bin/systemctl status *" /etc/sudoers.d/systemctl_commands; then
         # If not present, append the line to the sudoers file
-        echo "$USER ALL=(ALL) NOPASSWD: /bin/systemctl start *, /bin/systemctl stop *, /bin/systemctl is-active *, /bin/systemctl disable *, /bin/systemctl enable *, /bin/systemctl daemon-reload, /bin/systemctl status *" | sudo tee -a /etc/sudoers.d/systemctl_commands
+        echo "$USER ALL=(ALL) NOPASSWD: /bin/systemctl start *, /bin/systemctl stop *, /bin/systemctl restart *, /bin/systemctl is-active *, /bin/systemctl disable *, /bin/systemctl enable *, /bin/systemctl daemon-reload, /bin/systemctl status *" | sudo tee -a /etc/sudoers.d/systemctl_commands
     fi
 
     # Check if the server is already running

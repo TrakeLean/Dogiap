@@ -39,8 +39,6 @@ def webhook():
             
             pull_cmd = f'cd {ProgramPath} && git pull'
             restart_cmd = f'systemctl restart dogiap-{ContainerName}'
-            
-            # return jsonify({"error": "Internal Server Error"}), 200
         
             # Pull changes from the Git repository
             pull_result = subprocess.run(pull_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
@@ -49,11 +47,11 @@ def webhook():
                 logger.error(f"Error pulling changes: {pull_result.stderr}")
                 return jsonify({"error": "Error pulling changes"}), 500
 
-        #     # Delete the container
-        #     restart_result = subprocess.run(restart_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        #     if restart_result.returncode != 0:
-        #         logger.error(f"Error deleting container: {restart_result.stderr}")
-        #         return jsonify({"error": "Internal Server Error"}), 500
+            # Restart the container
+            restart_result = subprocess.run(restart_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            if restart_result.returncode != 0:
+                logger.error(f"Error deleting container: {restart_result.stderr}")
+                return jsonify({"error": "Internal Server Error"}), 500
 
             logger.info(f'GitHub - Push event: {ContainerName} updated and restarted')
             return jsonify({"message": f'GitHub - Push event: {ContainerName} updated and restarted'}), 200
